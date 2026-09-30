@@ -1,4 +1,5 @@
 import { SystemPanel } from "@/components/system/system-panel";
+import { BeruLoader } from "./beru-loader";
 
 export function SystemLoading({
   eyebrow,
@@ -17,12 +18,7 @@ export function SystemLoading({
           <h1>{title}</h1>
         </div>
         <SystemPanel eyebrow="SYSTEM // SYNCING" title={title} glow>
-          <div className="system-skeleton" role="status" aria-label={message}>
-            <span />
-            <span />
-            <span />
-            <p>{message}</p>
-          </div>
+          <BeruLoader message={message} />
         </SystemPanel>
       </div>
     </main>

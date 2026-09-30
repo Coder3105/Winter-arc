@@ -3,6 +3,7 @@ import type { Metadata, Viewport } from "next";
 import { PwaRuntime } from "@/components/pwa/pwa-runtime";
 
 import "./globals.css";
+import "./shadow-system.css";
 
 export const metadata: Metadata = {
   title: {
