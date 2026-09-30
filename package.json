@@ -1,0 +1,47 @@
+{
+  "name": "winter-arc",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "A 90-day discipline and body-transformation system.",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "bootstrap:owner": "node --conditions=react-server --env-file=.env.local --import tsx scripts/bootstrap-owner.ts",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
+  },
+  "dependencies": {
+    "bcryptjs": "3.0.3",
+    "mongoose": "9.10.3",
+    "next": "16.3.7",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "recharts": "3.10.1",
+    "server-only": "0.0.1",
+    "web-push": "^3.6.7",
+    "zod": "4.6.5"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "4.3.3",
+    "@types/node": "26.6.3",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "@types/web-push": "^3.6.4",
+    "eslint": "9.39.5",
+    "eslint-config-next": "16.3.7",
+    "prettier": "3.9.9",
+    "tailwindcss": "4.3.3",
+    "tsx": "4.23.15",
+    "typescript": "6.0.3",
+    "vitest": "5.0.2"
+  },
+  "engines": {
+    "node": "24.x"
+  }
+}
