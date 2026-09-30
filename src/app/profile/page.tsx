@@ -4,6 +4,7 @@ import { BaselineSummary } from "@/components/profile/baseline-summary";
 import { CalculatedMetrics } from "@/components/profile/calculated-metrics";
 import { ProgressionIdentity } from "@/components/progression/progression-status";
 import { SystemPanel } from "@/components/system/system-panel";
+import { ShadowGuard } from "@/components/system/shadow-portrait";
 import { requirePageOwner } from "@/server/auth/request-auth";
 import { getCalculationContext } from "@/server/services/calculation-summary-service";
 import { getProgressionSummary } from "@/server/services/progression-service";
@@ -28,6 +29,9 @@ export default async function ProfilePage() {
           <h1>OWNER PROFILE</h1>
         </div>
         <div className="profile-grid">
+          <div className="profile-grid__wide">
+            <ShadowGuard name={owner.displayName} />
+          </div>
           <SystemPanel eyebrow="AUTH // OWNER" title="OWNER">
             <dl className="detail-list">
               <div>

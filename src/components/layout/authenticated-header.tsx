@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-import { LogoutButton } from "@/components/auth/logout-button";
+import { SystemMenu } from "./system-menu";
 import { NotificationBell } from "@/components/notifications/notification-bell";
 
 interface AuthenticatedHeaderProps {
@@ -21,28 +21,10 @@ export function AuthenticatedHeader({
         <span>WINTER ARC</span>
         <small>{section}</small>
       </Link>
-      <nav aria-label="Primary navigation">
-        <Link href="/today" aria-current={active === "TODAY" ? "page" : undefined}>
-          TODAY
-        </Link>
-        <Link href="/calendar" aria-current={active === "CALENDAR" ? "page" : undefined}>
-          CALENDAR
-        </Link>
-        <Link href="/workouts" aria-current={active === "WORKOUTS" ? "page" : undefined}>
-          WORKOUTS
-        </Link>
-        <Link href="/progress" aria-current={active === "PROGRESS" ? "page" : undefined}>
-          PROGRESS
-        </Link>
-        <Link href="/reports" aria-current={active === "REPORTS" ? "page" : undefined}>
-          REPORTS
-        </Link>
+      <div className="app-header__actions">
         <NotificationBell />
-        <LogoutButton />
-      </nav>
-      <Link className="app-header__owner" href="/profile">
-        OWNER // {displayName.toUpperCase()}
-      </Link>
+        <SystemMenu displayName={displayName} {...(active ? { active } : {})} />
+      </div>
     </header>
   );
 }

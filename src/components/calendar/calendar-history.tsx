@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 
 import { SystemPanel } from "@/components/system/system-panel";
+import { ShadowPortrait, SHADOW_SOLDIERS } from "@/components/system/shadow-portrait";
 import { redirectExpiredSession } from "@/lib/auth/client-session";
 import type { CalendarDaySummary } from "@/server/calculations";
 import type { EvaluatedDailyQuest } from "@/server/daily-quest/evaluation";
@@ -281,6 +282,37 @@ export function CalendarHistory({
         </div>
       </section>
 
+      <section className="shadow-streak" aria-label="Perfect Day streak">
+        <ShadowPortrait soldier="igris" size={96} />
+        <div>
+          <span>IGRIS // THE UNBROKEN OATH</span>
+          <h2>
+            {streaks.perfectDay.current} <small>DAY STREAK</small>
+          </h2>
+          <p>
+            One Perfect Day at a time. Your longest run: {streaks.perfectDay.longest}{" "}
+            days.
+          </p>
+        </div>
+        <div
+          className="shadow-streak__chain"
+          aria-label={`${Math.min(streaks.perfectDay.current, 7)} of 7 streak markers lit`}
+        >
+          {Array.from({ length: 7 }, (_, index) => (
+            <i
+              key={index}
+              className={index < Math.min(streaks.perfectDay.current, 7) ? "is-lit" : ""}
+              aria-hidden="true"
+            />
+          ))}
+          <small>
+            {streaks.perfectDay.current >= 7
+              ? "7+ CONSECUTIVE DAYS"
+              : "BUILD YOUR FIRST SEVEN"}
+          </small>
+        </div>
+      </section>
+
       <section className="history-metrics" aria-label="History summary">
         <div>
           <span>PERFECT DAYS</span>
@@ -346,6 +378,17 @@ export function CalendarHistory({
               aria-pressed={selected?.date === day.date}
             >
               <strong>{Number(day.date.slice(-2))}</strong>
+              {day.isPerfectDay && (
+                <ShadowPortrait
+                  soldier={
+                    SHADOW_SOLDIERS[
+                      ((day.challengeDay ?? 1) - 1) % SHADOW_SOLDIERS.length
+                    ] ?? "beru"
+                  }
+                  size={40}
+                  className="calendar-cell__shadow"
+                />
+              )}
               <small>{day.challengeDay ? `D${day.challengeDay}` : "·"}</small>
               <span className="calendar-cell__state" aria-hidden="true">
                 {CALENDAR_STATE_LABEL[day.calendarState]}
@@ -374,7 +417,7 @@ export function CalendarHistory({
         </div>
       </SystemPanel>
 
-      <SystemPanel eyebrow="HISTORY // ELIGIBLE RULE DAYS" title="RULE STREAKS">
+      <SystemPanel eyebrow="SHADOW ARMY // CONSISTENCY" title="RULE STREAKS">
         <div className="streak-table">
           <div className="streak-table__header">
             <span>RULE</span>
