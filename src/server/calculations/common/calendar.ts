@@ -50,18 +50,24 @@ export function normalizeCalendarDate(input: CalendarInput, timezone: string): s
     calendarDayIndex(input);
     return input;
   }
-  const parts = new Intl.DateTimeFormat("en-US", {
+  const formatter = new Intl.DateTimeFormat("en-US", {
     timeZone: timezone,
     year: "numeric",
     month: "2-digit",
     day: "2-digit",
-    calendar: "iso8601",
+    calendar: "gregory",
     numberingSystem: "latn",
     era: "short",
-  }).formatToParts(parseInstant(input));
+  });
+  const parts = formatter.formatToParts(parseInstant(input));
   const part = (type: Intl.DateTimeFormatPartTypes) =>
     parts.find((item) => item.type === type)?.value;
-  if (part("era") !== "AD")
+  // ICU versions may label the positive ISO era AD or CE. Compare against a
+  // known positive year using the same formatter, not a hardcoded English label.
+  const positiveEra = formatter
+    .formatToParts(new Date("2000-01-01T12:00:00Z"))
+    .find((item) => item.type === "era")?.value;
+  if (!positiveEra || part("era") !== positiveEra)
     throw new CalculationError("date", "year must be in 0001–9999.");
   const date = `${part("year")?.padStart(4, "0")}-${part("month")}-${part("day")}`;
   calendarDayIndex(date);

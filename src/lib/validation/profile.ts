@@ -8,7 +8,19 @@ export const profileInputSchema = z.object({
   heightCm: z.number().positive().max(300),
   preferredWeightUnit: z.enum(["kg", "lb"]),
   preferredDistanceUnit: z.enum(["km", "mi"]),
-  timezone: z.string().trim().min(1).max(100),
+  timezone: z
+    .string()
+    .trim()
+    .min(1, "Select your timezone.")
+    .max(100)
+    .refine((value) => {
+      try {
+        new Intl.DateTimeFormat("en", { timeZone: value });
+        return true;
+      } catch {
+        return false;
+      }
+    }, "Select a valid timezone."),
 });
 
 export type ProfileInput = z.infer<typeof profileInputSchema>;

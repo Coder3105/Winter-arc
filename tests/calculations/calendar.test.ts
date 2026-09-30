@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import {
   CalculationError,
   addCalendarDays,
@@ -10,6 +10,62 @@ import {
 } from "@/server/calculations";
 
 describe("calendar and challenge days", () => {
+  it("supports ICU era labels CE/BCE without rejecting current challenge dates", () => {
+    const original = Intl.DateTimeFormat.prototype.formatToParts;
+    const spy = vi
+      .spyOn(Intl.DateTimeFormat.prototype, "formatToParts")
+      .mockImplementation(function (this: Intl.DateTimeFormat, date) {
+        return original.call(this, date).map((part) =>
+          part.type === "era"
+            ? {
+                ...part,
+                value: part.value === "AD" || part.value === "CE" ? "CE" : "BCE",
+              }
+            : part,
+        );
+      });
+    try {
+      expect(
+        normalizeCalendarDate(new Date("2026-09-30T20:00:00Z"), "Asia/Kolkata"),
+      ).toBe("2026-10-01");
+      expect(
+        calculateChallengeDay({
+          startDate: "2026-10-01",
+          currentDate: new Date("2026-10-01T08:00:00Z"),
+          timezone: "Asia/Kolkata",
+        }).dayNumber,
+      ).toBe(1);
+      expect(normalizeCalendarDate(new Date("0001-01-01T00:00:00Z"), "UTC")).toBe(
+        "0001-01-01",
+      );
+      expect(() =>
+        normalizeCalendarDate(new Date("0000-01-01T00:00:00Z"), "UTC"),
+      ).toThrow(CalculationError);
+      expect(() =>
+        normalizeCalendarDate(new Date("+010000-01-01T00:00:00Z"), "UTC"),
+      ).toThrow(CalculationError);
+    } finally {
+      spy.mockRestore();
+    }
+  });
+  it("does not depend on ISO-calendar era fields being emitted by ICU", () => {
+    const original = Intl.DateTimeFormat.prototype.formatToParts;
+    const spy = vi
+      .spyOn(Intl.DateTimeFormat.prototype, "formatToParts")
+      .mockImplementation(function (this: Intl.DateTimeFormat, date) {
+        const parts = original.call(this, date);
+        return this.resolvedOptions().calendar === "iso8601"
+          ? parts.filter((part) => part.type !== "era")
+          : parts;
+      });
+    try {
+      expect(normalizeCalendarDate(new Date("2026-10-01T00:00:00Z"), "UTC")).toBe(
+        "2026-10-01",
+      );
+    } finally {
+      spy.mockRestore();
+    }
+  });
   it("rejects instants that normalize outside supported calendar years", () => {
     expect(() => normalizeCalendarDate(new Date("0000-01-01T00:00:00Z"), "UTC")).toThrow(
       CalculationError,

@@ -4,6 +4,9 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import { redirectExpiredSession } from "@/lib/auth/client-session";
+import { profileInputSchema } from "@/lib/validation/profile";
+import { getSetupIssue, setupSaveError } from "@/lib/validation/setup";
+import { TIMEZONE_OPTIONS } from "@/lib/utils/timezones";
 
 import {
   createDefaultDailyRules,
@@ -86,10 +89,35 @@ export function SetupFlow({ initialProfile, initialConfig, baseline }: SetupFlow
     }));
   }
 
+  function configInput(status: "DRAFT" | "ACTIVE" = "ACTIVE") {
+    return {
+      ...config,
+      targetWeightKg: config.targetWeightKg.trim() ? Number(config.targetWeightKg) : null,
+      status,
+      notificationPreferences: { enabled: false },
+    };
+  }
+
+  function validate(throughStep = 2) {
+    const issue = getSetupIssue(profile, configInput(), throughStep);
+    if (issue) {
+      setMessage(issue.message);
+      setStep(issue.step);
+      return false;
+    }
+    setMessage(null);
+    return true;
+  }
+
+  function navigate(next: number) {
+    if (pending) return;
+    if (next > step && !validate(Math.min(next - 1, 2))) return;
+    setMessage(null);
+    setStep(next);
+  }
+
   async function save(status: "DRAFT" | "ACTIVE") {
-    if (!config.startDate) {
-      setMessage("Select a protocol start date before saving.");
-      setStep(1);
+    if (pending || !validate()) {
       return;
     }
 
@@ -99,26 +127,21 @@ export function SetupFlow({ initialProfile, initialConfig, baseline }: SetupFlow
       const profileResponse = await fetch("/api/v1/profile", {
         method: "PUT",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify(profile),
+        body: JSON.stringify(profileInputSchema.parse(profile)),
       });
       if (redirectExpiredSession(profileResponse)) return;
       if (!profileResponse.ok) {
-        throw new Error("Profile validation failed.");
+        throw new Error(await setupSaveError(profileResponse, "Profile"));
       }
 
       const configResponse = await fetch("/api/v1/winter-arc", {
         method: "PUT",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({
-          ...config,
-          targetWeightKg: config.targetWeightKg ? Number(config.targetWeightKg) : null,
-          status,
-          notificationPreferences: { enabled: false },
-        }),
+        body: JSON.stringify(configInput(status)),
       });
       if (redirectExpiredSession(configResponse)) return;
       if (!configResponse.ok) {
-        throw new Error("Protocol validation failed.");
+        throw new Error(await setupSaveError(configResponse, "Protocol"));
       }
 
       if (status === "ACTIVE") {
@@ -144,7 +167,8 @@ export function SetupFlow({ initialProfile, initialConfig, baseline }: SetupFlow
           >
             <button
               type="button"
-              onClick={() => setStep(index)}
+              onClick={() => navigate(index)}
+              disabled={pending}
               aria-current={index === step ? "step" : undefined}
             >
               <span>{String(index + 1).padStart(2, "0")}</span>
@@ -160,6 +184,11 @@ export function SetupFlow({ initialProfile, initialConfig, baseline }: SetupFlow
         glow
       >
         <div className="setup-step">
+          {message && (
+            <p className="form-message" role="alert">
+              {message}
+            </p>
+          )}
           {step === 0 && (
             <div className="form-grid">
               <label className="system-field system-field--wide">
@@ -214,13 +243,30 @@ export function SetupFlow({ initialProfile, initialConfig, baseline }: SetupFlow
               </label>
               <label className="system-field">
                 <span>TIMEZONE</span>
-                <input
+                <select
                   value={profile.timezone}
                   onChange={(event) =>
                     setProfile({ ...profile, timezone: event.target.value })
                   }
-                  placeholder="Asia/Kolkata"
-                />
+                  required
+                  aria-describedby="setup-timezone-help"
+                >
+                  <option value="" disabled>
+                    Select your timezone
+                  </option>
+                  {profile.timezone &&
+                    !TIMEZONE_OPTIONS.some((zone) => zone === profile.timezone) && (
+                      <option value={profile.timezone}>{profile.timezone}</option>
+                    )}
+                  {TIMEZONE_OPTIONS.map((zone) => (
+                    <option key={zone} value={zone}>
+                      {zone}
+                    </option>
+                  ))}
+                </select>
+                <small id="setup-timezone-help">
+                  Required. Determines your daily reset and challenge dates.
+                </small>
               </label>
             </div>
           )}
@@ -352,6 +398,10 @@ export function SetupFlow({ initialProfile, initialConfig, baseline }: SetupFlow
                   <dd>{profile.displayName}</dd>
                 </div>
                 <div>
+                  <dt>TIMEZONE</dt>
+                  <dd>{profile.timezone || "NOT SELECTED"}</dd>
+                </div>
+                <div>
                   <dt>PROTOCOL</dt>
                   <dd>{config.name}</dd>
                 </div>
@@ -387,16 +437,10 @@ export function SetupFlow({ initialProfile, initialConfig, baseline }: SetupFlow
                   onClick={() => void save("ACTIVE")}
                   disabled={pending}
                 >
-                  {pending ? "SAVING" : "SAVE / ACTIVATE"}
+                  {pending ? "SAVING" : "ACTIVATE"}
                 </button>
               </div>
             </div>
-          )}
-
-          {message && (
-            <p className="form-message" role="status">
-              {message}
-            </p>
           )}
         </div>
       </SystemPanel>
@@ -405,8 +449,8 @@ export function SetupFlow({ initialProfile, initialConfig, baseline }: SetupFlow
         <button
           className="secondary-button"
           type="button"
-          onClick={() => setStep((current) => Math.max(0, current - 1))}
-          disabled={step === 0}
+          onClick={() => navigate(Math.max(0, step - 1))}
+          disabled={pending || step === 0}
         >
           ← BACK
         </button>
@@ -414,7 +458,8 @@ export function SetupFlow({ initialProfile, initialConfig, baseline }: SetupFlow
           <button
             className="system-button"
             type="button"
-            onClick={() => setStep((current) => Math.min(STEPS.length - 1, current + 1))}
+            onClick={() => navigate(Math.min(STEPS.length - 1, step + 1))}
+            disabled={pending}
           >
             NEXT →
           </button>
