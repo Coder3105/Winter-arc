@@ -1,0 +1,132 @@
+.system-update-dialog {
+  position: fixed;
+  inset: 0;
+  box-sizing: border-box;
+  width: min(440px, calc(100vw - 40px));
+  max-width: 100%;
+  max-height: calc(100dvh - 48px);
+  margin: auto;
+  padding: clamp(24px, 6vw, 36px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  border: 1px solid #86dbf4;
+  background: radial-gradient(ellipse at top, #102c3e, #050d16 65%);
+  color: #ddf4ff;
+  box-shadow:
+    0 0 0 5px #65d7ff0b,
+    0 0 70px #38bdf82b,
+    0 24px 90px #000b;
+  text-align: center;
+  pointer-events: auto;
+}
+.system-update-dialog::backdrop {
+  background: #01060cc4;
+  -webkit-backdrop-filter: blur(9px);
+  backdrop-filter: blur(9px);
+}
+.system-update-dialog[open] {
+  animation: update-dialog-enter 200ms ease-out;
+}
+.system-update-dialog__mark {
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  margin: 0 auto 24px;
+  border: 1px solid #4a9cb9;
+  color: #b7f0ff;
+  font-size: 30px;
+  box-shadow:
+    inset 0 0 22px #43b7e01c,
+    0 0 24px #43b7e019;
+}
+.system-update-dialog__eyebrow {
+  color: #85b8ce;
+  font-size: 9px;
+  letter-spacing: 0.18em;
+}
+.system-update-dialog h2 {
+  margin: 14px 0 16px;
+  font-family: var(--font-display);
+  font-size: clamp(22px, 6vw, 29px);
+  line-height: 1.4;
+  letter-spacing: 0.06em;
+  outline: none;
+}
+.system-update-dialog > p:not(.system-update-dialog__eyebrow) {
+  font-size: 12px;
+  line-height: 1.8;
+  color: #aac9d9;
+}
+.system-update-dialog .system-update-dialog__notice {
+  margin: 22px 0;
+  padding: 14px 12px;
+  border-block: 1px solid #234456;
+}
+.system-update-dialog .system-update-dialog__error {
+  color: #ffb4bb;
+}
+.system-update-dialog__actions {
+  display: grid;
+  gap: 10px;
+  margin-top: 24px;
+}
+.system-update-dialog__actions button {
+  min-height: 48px;
+  padding: 12px;
+  border: 1px solid #79d5f3;
+  background: #16475b;
+  color: #e0f8ff;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  cursor: pointer;
+}
+.system-update-dialog__actions button:last-child {
+  border-color: #335265;
+  background: transparent;
+  color: #a5c3d3;
+}
+.system-update-dialog__actions button:disabled {
+  opacity: 0.5;
+  cursor: wait;
+}
+.system-update-dialog__actions button:focus-visible {
+  outline: 2px solid #dcf8ff;
+  outline-offset: 4px;
+}
+.system-update-dialog__pending {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  align-items: center;
+}
+.system-update-dialog__pending span {
+  width: 14px;
+  height: 14px;
+  border: 1px solid #2b5266;
+  border-top-color: #b8f2ff;
+  border-radius: 50%;
+  animation: update-dialog-spin 1s linear infinite;
+}
+@keyframes update-dialog-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes update-dialog-enter {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .system-update-dialog,
+  .system-update-dialog * {
+    animation: none !important;
+  }
+}

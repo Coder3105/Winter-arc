@@ -1,5 +1,28 @@
 # Shadow interface
 
+## Dashboard scroll focus
+
+The Today dashboard uses one-card-at-a-time focus. The card crossing a reading line
+46% down the visible viewport gets a cyan boundary; other cards blur and dim with a
+260ms transition. Daily rules each have their own border. Nested containers are never
+blurred around an active card. The header, navigation, notifications and System event
+overlays remain outside the effect. End spacing lets the final card reach the same
+reading position without skipping the preceding card.
+
+Pointer and keyboard interaction immediately reveal the corresponding card. Visible
+editing fields retain focus when the mobile keyboard changes the viewport. Forms
+stay mounted: no source state, save logic or input values change. Scroll work is
+batched with requestAnimationFrame; resize and content changes are observed and all
+listeners/observers are cleaned up on unmount or when focus view is disabled.
+
+FOCUS VIEW ON toggles to ALL PANELS for a fully readable view. Without JavaScript,
+every panel remains readable. Reduced motion removes transitions; printing and
+forced-colors mode remove blur. Browser tests cover sequential focus, form value
+retention, keyboard links, expanded panels, header/menu isolation, the toggle,
+reduced motion and no-JavaScript rendering at mobile and desktop widths.
+
+## Shadow artwork and navigation
+
 The header navigation lives in a toggleable modal System menu. It supports Escape,
 backdrop dismissal, keyboard focus containment and focus restoration. Exit appears
 only inside the menu and shows pending feedback while the session is revoked. A

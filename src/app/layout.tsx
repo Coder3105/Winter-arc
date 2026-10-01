@@ -5,6 +5,8 @@ import { PwaRuntime } from "@/components/pwa/pwa-runtime";
 import "./globals.css";
 import "./shadow-system.css";
 import "../../public/system-boot.css";
+import "./scroll-focus.css";
+import "./update-dialog.css";
 
 export const metadata: Metadata = {
   title: {

@@ -187,7 +187,11 @@ export function TodayTracker({
 
   return (
     <div className="today-tracker">
-      <section className="quest-overview" aria-label="Daily Quest progress">
+      <section
+        className="quest-overview"
+        aria-label="Daily Quest progress"
+        data-focus-card
+      >
         <div>
           <span>WINTER ARC</span>
           <strong>
@@ -262,6 +266,7 @@ export function TodayTracker({
       >
         <div
           className="quest-progress"
+          data-focus-card
           aria-label={`${displayNumber(progress, 1)} percent complete`}
         >
           <div>
@@ -278,7 +283,7 @@ export function TodayTracker({
               const booleanRule =
                 rule.type === "BOOLEAN" || rule.type === "LOGGING_REQUIREMENT";
               return (
-                <article className="quest-rule" key={rule.key}>
+                <article className="quest-rule" key={rule.key} data-focus-card>
                   <div className="quest-rule__heading">
                     <div>
                       <h2>{rule.name}</h2>
