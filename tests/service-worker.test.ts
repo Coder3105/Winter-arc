@@ -63,12 +63,18 @@ describe("Phase 12 service worker runtime", () => {
     });
     await installation;
     expect(cache.addAll).toHaveBeenCalledWith(
-      expect.arrayContaining(["/offline.html", "/icons/icon-192.png"]),
+      expect.arrayContaining([
+        "/offline.html",
+        "/icons/icon-192.png",
+        "/launch.html",
+        "/launch.js",
+        "/system-boot.css",
+      ]),
     );
 
     caches.keys.mockResolvedValue([
       "winter-arc-safe-v11-old",
-      "winter-arc-safe-v12-1",
+      "winter-arc-safe-v12-2",
       "another-app-cache",
     ]);
     let activation: Promise<unknown> | undefined;
@@ -103,6 +109,52 @@ describe("Phase 12 service worker runtime", () => {
     });
     expect(await responsePromise).toBe(fallback);
     expect(cache.put).not.toHaveBeenCalled();
+  });
+
+  it.each(["/launch.html", "/launch.js", "/system-boot.css"])(
+    "serves the public boot asset %s from cache without waiting for the network",
+    async (path) => {
+      const cached = new Response("public boot asset");
+      cache.match.mockResolvedValue(cached);
+      let responsePromise: Promise<Response> | undefined;
+      handlers.fetch?.({
+        request: {
+          method: "GET",
+          url: `https://winter.example${path}`,
+          mode: path.endsWith("html") ? "navigate" : "cors",
+        },
+        respondWith: (promise: Promise<Response>) => (responsePromise = promise),
+      });
+      expect(await responsePromise).toBe(cached);
+      expect(cache.match).toHaveBeenCalledWith(path);
+      expect(fetchMock).not.toHaveBeenCalled();
+    },
+  );
+
+  it("fetches a missing boot shell and never stores authenticated navigations", async () => {
+    for (const path of ["/launch.html", "/", "/today"]) {
+      let responsePromise: Promise<Response> | undefined;
+      handlers.fetch?.({
+        request: {
+          method: "GET",
+          url: `https://winter.example${path}`,
+          mode: "navigate",
+        },
+        respondWith: (promise: Promise<Response>) => (responsePromise = promise),
+      });
+      expect((await responsePromise)?.status).toBe(200);
+    }
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+    expect(cache.put).not.toHaveBeenCalled();
+  });
+
+  it("does not serve boot assets for another origin", () => {
+    const respondWith = vi.fn();
+    handlers.fetch?.({
+      request: new Request("https://other.example/launch.js"),
+      respondWith,
+    });
+    expect(respondWith).not.toHaveBeenCalled();
   });
 
   it("shows a safe fallback for malformed push data", async () => {

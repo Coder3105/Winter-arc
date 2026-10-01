@@ -4,6 +4,7 @@ import { PwaRuntime } from "@/components/pwa/pwa-runtime";
 
 import "./globals.css";
 import "./shadow-system.css";
+import "../../public/system-boot.css";
 
 export const metadata: Metadata = {
   title: {

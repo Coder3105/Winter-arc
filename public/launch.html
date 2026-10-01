@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
+    <meta name="theme-color" content="#03070c" />
+    <meta name="robots" content="noindex" />
+    <title>System Loading | Winter Arc</title>
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="stylesheet" href="/system-boot.css" />
+    <script src="/launch.js" defer></script>
+  </head>
+  <body class="system-boot-document">
+    <main class="system-boot" aria-labelledby="system-boot-title">
+      <section class="system-boot__panel">
+        <div class="system-boot__orbit" aria-hidden="true">
+          <i></i><i></i><span></span>
+        </div>
+        <p class="system-boot__eyebrow">WINTER ARC // INITIALIZING</p>
+        <h1 id="system-boot-title">SYSTEM LOADING</h1>
+        <p class="system-boot__message" role="status">
+          Establishing your connection to the System...
+        </p>
+        <div
+          class="system-boot__track"
+          role="progressbar"
+          aria-label="Loading the System"
+        >
+          <span></span>
+        </div>
+        <div class="system-boot__footer" aria-hidden="true">
+          <span>PLEASE WAIT</span
+          ><span class="system-boot__signal"><i></i><i></i><i></i></span>
+        </div>
+        <a class="system-boot__retry" href="/">Taking longer? Enter System &rarr;</a>
+        <noscript><p>JavaScript is disabled. Use Enter System to continue.</p></noscript>
+      </section>
+    </main>
+  </body>
+</html>

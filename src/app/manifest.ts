@@ -6,7 +6,7 @@ export default function manifest(): MetadataRoute.Manifest {
     name: "Winter Arc",
     short_name: "Winter Arc",
     description: "A private 90-day discipline and body-transformation protocol.",
-    start_url: "/",
+    start_url: "/launch.html",
     scope: "/",
     display: "standalone",
     background_color: "#03070c",
