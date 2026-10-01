@@ -18,7 +18,7 @@ describe("Phase 12 installable PWA", () => {
       id: "/",
       name: "Winter Arc",
       short_name: "Winter Arc",
-      start_url: "/",
+      start_url: "/launch.html",
       scope: "/",
       display: "standalone",
       background_color: "#03070c",

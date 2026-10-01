@@ -1,10 +1,12 @@
 /* Winter Arc Phase 12 service worker: safe shell assets only. */
 const CACHE_PREFIX = "winter-arc-safe-";
-const CACHE_VERSION = "v12-1";
+const CACHE_VERSION = "v12-2";
 const STATIC_CACHE = `${CACHE_PREFIX}${CACHE_VERSION}`;
 const OFFLINE_URL = "/offline.html";
+const LAUNCH_ASSETS = ["/launch.html", "/system-boot.css", "/launch.js"];
 const PRECACHE = [
   OFFLINE_URL,
+  ...LAUNCH_ASSETS,
   "/icons/icon-192.png",
   "/icons/icon-512.png",
   "/icons/icon-maskable-512.png",
@@ -72,6 +74,17 @@ self.addEventListener("fetch", (event) => {
   if (request.method !== "GET") return;
   const url = new URL(request.url);
   if (isApiRequest(url)) return;
+
+  // Only this public, data-free launch shell may bypass network-first navigation.
+  if (url.origin === self.location.origin && LAUNCH_ASSETS.includes(url.pathname)) {
+    event.respondWith(
+      caches.open(STATIC_CACHE).then(async (cache) => {
+        const cached = await cache.match(url.pathname);
+        return cached || fetch(request);
+      }),
+    );
+    return;
+  }
 
   if (request.mode === "navigate") {
     event.respondWith(
