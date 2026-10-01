@@ -1,5 +1,6 @@
 import { AuthenticatedHeader } from "@/components/layout/authenticated-header";
 import { TodayTracker } from "@/components/daily-quest/today-tracker";
+import { ScrollFocus } from "@/components/system/scroll-focus";
 import { ProgressionStatus } from "@/components/progression/progression-status";
 import { RecoveryPanel } from "@/components/recovery/recovery-panel";
 import { WorkoutTracker } from "@/components/workouts/workout-tracker";
@@ -34,11 +35,13 @@ export default async function TodayPage() {
           <p>SYSTEM // TODAY</p>
           <h1>DAILY QUEST</h1>
         </div>
-        <ProgressionStatus initialSummary={progression} />
-        <RecoveryPanel summary={recovery} />
-        <TodayTracker initialResult={result} initialWeightResult={weightResult} />
-        <div className="today-workout-separator" aria-hidden="true" />
-        <WorkoutTracker initialResult={workoutResult} />
+        <ScrollFocus>
+          <ProgressionStatus initialSummary={progression} />
+          <RecoveryPanel summary={recovery} />
+          <TodayTracker initialResult={result} initialWeightResult={weightResult} />
+          <div className="today-workout-separator" aria-hidden="true" />
+          <WorkoutTracker initialResult={workoutResult} />
+        </ScrollFocus>
       </div>
     </main>
   );

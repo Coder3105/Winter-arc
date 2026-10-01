@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { UpdateDialog } from "./update-dialog";
 
 export function shouldRegisterServiceWorker() {
   if (typeof window === "undefined" || !("serviceWorker" in navigator)) return false;
@@ -89,25 +90,21 @@ export function PwaRuntime() {
   }, []);
 
   return (
-    <div className="pwa-system-messages" aria-live="polite">
-      {offline && (
-        <div className="pwa-banner pwa-banner--offline">
-          CONNECTION REQUIRED // Private tracking is unavailable offline.
-        </div>
-      )}
+    <>
+      <div className="pwa-system-messages" aria-live="polite">
+        {offline && (
+          <div className="pwa-banner pwa-banner--offline">
+            CONNECTION REQUIRED // Private tracking is unavailable offline.
+          </div>
+        )}
+      </div>
       {waiting && (
-        <div className="pwa-banner">
-          <span>
-            <strong>SYSTEM UPDATE AVAILABLE</strong>A NEW VERSION OF WINTER ARC IS READY.
-          </span>
-          <button
-            type="button"
-            onClick={() => waiting.postMessage({ type: "SKIP_WAITING" })}
-          >
-            UPDATE NOW
-          </button>
-        </div>
+        <UpdateDialog
+          offline={offline}
+          onUpdate={() => waiting.postMessage({ type: "SKIP_WAITING" })}
+          onLater={() => setWaiting(null)}
+        />
       )}
-    </div>
+    </>
   );
 }

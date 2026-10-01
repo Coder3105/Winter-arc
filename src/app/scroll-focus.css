@@ -1,0 +1,96 @@
+.scroll-focus-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+.scroll-focus-toolbar > span {
+  font-size: 9px;
+  line-height: 1.7;
+  letter-spacing: 0.12em;
+  color: #82a9bb;
+}
+.scroll-focus-toolbar button {
+  flex-shrink: 0;
+  min-height: 44px;
+  padding: 10px 12px;
+  border: 1px solid #30566a;
+  background: #091923;
+  color: #bcecff;
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  cursor: pointer;
+}
+.scroll-focus-toolbar button[aria-pressed="true"] {
+  border-color: #73cce8;
+  box-shadow: inset 0 0 15px #48d7ff12;
+}
+.scroll-focus {
+  display: grid;
+  gap: 22px;
+}
+.scroll-focus[data-focus-ready="true"] {
+  /* Let the last short objective reach the same reading line as every other card. */
+  padding-bottom: 45svh;
+}
+.scroll-focus .quest-list {
+  display: grid;
+  gap: 22px;
+  border-top: 0;
+  padding-block: 18px;
+}
+.scroll-focus .quest-rule {
+  padding: 22px 18px;
+  border: 1px solid var(--border-system);
+  background: #06101bea;
+}
+.scroll-focus .today-tracker {
+  gap: 22px;
+}
+/* Nested quest cards own their borders; do not draw a second sharp frame around them. */
+.scroll-focus[data-focus-ready="true"] .system-panel:has([data-focus-target]) {
+  border-color: transparent;
+  background: transparent;
+  box-shadow: none;
+  backdrop-filter: none;
+}
+.scroll-focus[data-focus-ready="true"] .system-panel:has([data-focus-target])::before,
+.scroll-focus[data-focus-ready="true"] .system-panel:has([data-focus-target])::after {
+  opacity: 0;
+}
+.scroll-focus [data-focus-target] {
+  transition:
+    filter 260ms ease,
+    opacity 260ms ease,
+    border-color 260ms ease,
+    box-shadow 260ms ease;
+}
+.scroll-focus[data-focus-ready="true"] [data-focus-target]:not([data-focus-active]) {
+  filter: blur(3px);
+  opacity: 0.38;
+}
+.scroll-focus[data-focus-ready="true"] [data-focus-active] {
+  filter: none;
+  opacity: 1;
+  border-color: #87ddf6;
+  box-shadow:
+    0 0 0 1px #77dcff22,
+    0 0 30px #3fcdff18;
+}
+/* Global headers, drawers, notifications and transient System events are not targets. */
+.scroll-focus .quest-progress[data-focus-card] {
+  padding: 12px;
+  border: 1px solid var(--border-system);
+}
+@media (prefers-reduced-motion: reduce) {
+  .scroll-focus [data-focus-target] {
+    transition: none !important;
+  }
+}
+@media (forced-colors: active), print {
+  .scroll-focus[data-focus-ready="true"] [data-focus-target] {
+    filter: none;
+    opacity: 1;
+  }
+}
