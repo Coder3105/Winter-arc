@@ -119,6 +119,27 @@ describe("weight and progress UI", () => {
     expect(markup).toContain("PASS");
   });
 
+  it("omits Morning Weight from Today when it is not in the rule snapshot", () => {
+    const customQuest = {
+      ...quest,
+      totalRequiredRules: 1,
+      rules: quest.rules.filter((rule) => rule.key !== "morning_weight"),
+    };
+    const markup = renderToStaticMarkup(
+      createElement(TodayTracker, {
+        initialResult: { kind: "AVAILABLE", quest: customQuest },
+        initialWeightResult: {
+          kind: "AVAILABLE",
+          localDate: "2026-09-30",
+          weight: null,
+        },
+      }),
+    );
+    expect(markup).not.toContain("MORNING WEIGHT");
+    expect(markup).not.toContain("LOG WEIGHT");
+    expect(markup).toContain("No Junk Food");
+  });
+
   it("renders transformation metrics, graph filters, goal and measured composition", () => {
     const projection = buildWeightAnalytics({
       timezone: "UTC",

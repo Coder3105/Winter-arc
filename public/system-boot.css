@@ -69,7 +69,8 @@
   animation-direction: reverse;
   animation-duration: 6s;
 }
-.system-boot__orbit > span {
+.system-boot__core {
+  position: absolute;
   width: 22px;
   height: 22px;
   border: 1px solid #acefff;
@@ -77,6 +78,15 @@
   box-shadow: 0 0 24px #6be0ff55;
   transform: rotate(45deg);
   animation: system-boot-pulse 2s ease-in-out infinite;
+}
+.system-boot__mark {
+  position: relative;
+  z-index: 1;
+  display: block;
+  width: 54px;
+  height: 54px;
+  filter: drop-shadow(0 0 12px #70dcff66);
+  animation: system-boot-mark 2s ease-in-out infinite;
 }
 .system-boot__eyebrow {
   margin: 0 0 14px;
@@ -163,6 +173,17 @@
 @keyframes system-boot-pulse {
   50% {
     opacity: 0.35;
+  }
+}
+@keyframes system-boot-mark {
+  0%,
+  100% {
+    opacity: 0.78;
+    transform: scale(0.96);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1);
   }
 }
 @keyframes system-boot-sweep {

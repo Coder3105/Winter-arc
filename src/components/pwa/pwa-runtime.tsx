@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { UpdateDialog } from "./update-dialog";
+import { InstallSystemPrompt } from "./install-system-prompt";
 
 export function shouldRegisterServiceWorker() {
   if (typeof window === "undefined" || !("serviceWorker" in navigator)) return false;
@@ -105,6 +106,7 @@ export function PwaRuntime() {
           onLater={() => setWaiting(null)}
         />
       )}
+      <InstallSystemPrompt />
     </>
   );
 }

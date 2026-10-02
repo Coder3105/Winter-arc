@@ -8,6 +8,7 @@ import {
   evaluateEventNotifications,
   evaluateTimeBasedNotifications,
   getZonedDateTime,
+  isDailyQuestEmailWindow,
   isInsideQuietHours,
   isReminderSlotDue,
   type TimeBasedNotificationContext,
@@ -95,6 +96,43 @@ describe("notification scheduling primitives", () => {
     expect(
       getZonedDateTime(new Date("2026-10-05T19:00:00.000Z"), "Asia/Kolkata"),
     ).toEqual({ localDate: "2026-10-06", localTime: "00:30" });
+  });
+
+  it("selects only timezones currently inside the local 18:00-18:59 window", () => {
+    const instant = new Date("2026-01-15T12:30:00.000Z");
+    const eligibility = Object.fromEntries(
+      ["Asia/Kolkata", "America/New_York", "Europe/London", "Asia/Tokyo"].map(
+        (timezone) => [
+          timezone,
+          isDailyQuestEmailWindow(getZonedDateTime(instant, timezone).localTime),
+        ],
+      ),
+    );
+    expect(eligibility).toEqual({
+      "Asia/Kolkata": true,
+      "America/New_York": false,
+      "Europe/London": false,
+      "Asia/Tokyo": false,
+    });
+    expect(isDailyQuestEmailWindow("17:59")).toBe(false);
+    expect(isDailyQuestEmailWindow("18:00")).toBe(true);
+    expect(isDailyQuestEmailWindow("18:59")).toBe(true);
+    expect(isDailyQuestEmailWindow("19:00")).toBe(false);
+  });
+
+  it("lets Intl apply New York daylight-saving offsets", () => {
+    const beforeChange = getZonedDateTime(
+      new Date("2026-03-07T23:30:00.000Z"),
+      "America/New_York",
+    );
+    const afterChange = getZonedDateTime(
+      new Date("2026-03-08T22:30:00.000Z"),
+      "America/New_York",
+    );
+    expect(beforeChange).toEqual({ localDate: "2026-03-07", localTime: "18:30" });
+    expect(afterChange).toEqual({ localDate: "2026-03-08", localTime: "18:30" });
+    expect(isDailyQuestEmailWindow(beforeChange.localTime)).toBe(true);
+    expect(isDailyQuestEmailWindow(afterChange.localTime)).toBe(true);
   });
 
   it("allows due and within-grace slots, but rejects early and stale slots", () => {

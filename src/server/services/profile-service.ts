@@ -1,6 +1,7 @@
 import "server-only";
 
 import type { ProfileInput } from "@/lib/validation/profile";
+import { normalizeAvatarKey, type AvatarKey } from "@/lib/avatar-catalogue";
 import { connectToDatabase } from "@/server/db/mongoose";
 import { UserProfileModel, type UserProfileDocument } from "@/server/models/user-profile";
 
@@ -8,13 +9,14 @@ export interface ProfileDto {
   readonly id: string;
   readonly displayName: string;
   readonly dateOfBirth: string | null;
-  readonly ageAtBaseline: number;
+  readonly ageAtBaseline: number | null;
   readonly sex: UserProfileDocument["sex"];
-  readonly heightCm: number;
+  readonly heightCm: number | null;
   readonly preferredWeightUnit: UserProfileDocument["preferredWeightUnit"];
   readonly preferredDistanceUnit: UserProfileDocument["preferredDistanceUnit"];
   readonly timezone: string;
   readonly selectedTitle: string | null;
+  readonly avatarKey: AvatarKey | null;
   readonly createdAt: string;
   readonly updatedAt: string;
 }
@@ -31,6 +33,7 @@ function toProfileDto(profile: UserProfileDocument): ProfileDto {
     preferredDistanceUnit: profile.preferredDistanceUnit,
     timezone: profile.timezone,
     selectedTitle: profile.selectedTitle ?? null,
+    avatarKey: normalizeAvatarKey(profile.avatarKey),
     createdAt: profile.createdAt.toISOString(),
     updatedAt: profile.updatedAt.toISOString(),
   };

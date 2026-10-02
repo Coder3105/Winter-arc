@@ -78,6 +78,7 @@ export class WebPushNotificationTransport implements NotificationTransport {
       configuration.privateKey,
     );
     const payload = JSON.stringify({
+      recipientUserHash: createHash("sha256").update(userId).digest("hex"),
       title: notification.title,
       body: notification.body,
       tag: `winter-arc-${createHash("sha256").update(notification.dedupeKey).digest("hex").slice(0, 24)}`,

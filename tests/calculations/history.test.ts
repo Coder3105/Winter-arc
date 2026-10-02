@@ -231,4 +231,18 @@ describe("streak calculations", () => {
       ]).current,
     ).toBe(1);
   });
+
+  it.each(["reading", "meditation", "journaling", "stretching"])(
+    "derives a generic %s streak from snapshotted days",
+    (key) => {
+      const quests = ["2026-10-01", "2026-10-02"].map((date) => ({
+        date,
+        temporalState: "PAST" as const,
+        rules: [{ key, name: key.toUpperCase(), order: 1, state: "PASS" as const }],
+      }));
+      expect(
+        calculateRuleStreaks(quests, [{ key, name: key.toUpperCase(), order: 1 }])[key],
+      ).toMatchObject({ current: 2, longest: 2 });
+    },
+  );
 });

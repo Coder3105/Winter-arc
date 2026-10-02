@@ -30,14 +30,14 @@ export interface SummaryAssessment extends BodyCompositionSnapshot {
 
 export interface SummaryInput {
   readonly profile: {
-    readonly ageAtBaseline: number;
-    readonly sex: string;
+    readonly ageAtBaseline: number | null;
+    readonly sex: string | null;
     readonly timezone: string;
   } | null;
   readonly config: {
     readonly startDate: string;
     readonly durationDays: number;
-    readonly startingWeightKg: number;
+    readonly startingWeightKg: number | null;
     readonly targetWeightKg: number | null;
     readonly status: string;
   } | null;
@@ -77,7 +77,10 @@ export function buildCalculationSummary({
   const source = sourceValues(latest);
   const sex = profile?.sex;
   const mifflinInputs: Parameters<typeof calculateMifflinStJeorBmr>[0] | null =
-    profile && (sex === "male" || sex === "female") && source
+    profile &&
+    profile.ageAtBaseline !== null &&
+    (sex === "male" || sex === "female") &&
+    source
       ? {
           weightKg: source.weightKg,
           heightCm: source.heightCm,
@@ -143,7 +146,7 @@ export function buildCalculationSummary({
     bodyCompositionChange:
       baseline && latest ? compareBodyComposition(baseline, latest) : null,
     goalProgress:
-      config && source
+      config && config.startingWeightKg !== null && source
         ? calculateGoalProgress({
             startingWeightKg: config.startingWeightKg,
             currentWeightKg: source.weightKg,

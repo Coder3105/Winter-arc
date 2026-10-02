@@ -1,11 +1,11 @@
 import { z } from "zod";
 
 export const profileInputSchema = z.object({
-  displayName: z.string().trim().min(1).max(80),
+  displayName: z.string().trim().min(2).max(40),
   dateOfBirth: z.iso.date().nullable().default(null),
-  ageAtBaseline: z.number().int().min(0).max(150),
-  sex: z.enum(["male", "female", "other", "prefer_not_to_say"]),
-  heightCm: z.number().positive().max(300),
+  ageAtBaseline: z.number().int().min(0).max(150).nullable(),
+  sex: z.enum(["male", "female", "other", "prefer_not_to_say"]).nullable(),
+  heightCm: z.number().positive().max(300).nullable(),
   preferredWeightUnit: z.enum(["kg", "lb"]),
   preferredDistanceUnit: z.enum(["km", "mi"]),
   timezone: z

@@ -8,6 +8,7 @@ const timedToggle = toggle.extend({ time: localTime }).strict();
 export const notificationPreferencesInputSchema = z
   .object({
     enabled: z.boolean(),
+    dailyQuestEmailReminder: z.boolean(),
     privacyMode: z.enum(["PRIVATE", "DETAILED"]),
     quietHours: z
       .object({
@@ -51,6 +52,7 @@ export type NotificationPreferencesInput = z.infer<
 
 export const DEFAULT_NOTIFICATION_PREFERENCES: NotificationPreferencesInput = {
   enabled: false,
+  dailyQuestEmailReminder: false,
   privacyMode: "PRIVATE",
   quietHours: {
     enabled: false,

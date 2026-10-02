@@ -24,7 +24,7 @@ export interface WinterArcConfigDocument {
   startDate: Date;
   endDate: Date;
   status: "DRAFT" | "ACTIVE" | "COMPLETED" | "CANCELLED";
-  startingWeightKg: number;
+  startingWeightKg: number | null;
   targetWeightKg: number | null;
   weeklyWorkoutTarget: number;
   rules: RuleDocument[];
@@ -43,7 +43,7 @@ const ruleSchema = new Schema<RuleDocument>(
     target: { type: Number, default: null, min: 0 },
     unit: { type: String, default: null, maxlength: 30 },
     requiredFrequency: { type: Number, required: true, min: 1, max: 7 },
-    order: { type: Number, required: true, min: 0, max: 100 },
+    order: { type: Number, required: true, min: 0 },
   },
   { _id: false },
 );
@@ -61,7 +61,7 @@ const winterArcConfigSchema = new Schema<WinterArcConfigDocument>(
       enum: ["DRAFT", "ACTIVE", "COMPLETED", "CANCELLED"],
       default: "DRAFT",
     },
-    startingWeightKg: { type: Number, required: true, min: 0 },
+    startingWeightKg: { type: Number, default: null, min: 0 },
     targetWeightKg: { type: Number, default: null, min: 0 },
     weeklyWorkoutTarget: { type: Number, required: true, min: 1, max: 7, default: 4 },
     rules: { type: [ruleSchema], required: true },
@@ -76,6 +76,19 @@ const winterArcConfigSchema = new Schema<WinterArcConfigDocument>(
 );
 
 winterArcConfigSchema.index({ userId: 1, status: 1 });
+winterArcConfigSchema.index(
+  { userId: 1 },
+  {
+    unique: true,
+    partialFilterExpression: { status: "ACTIVE" },
+    name: "unique_active_winter_arc_per_user",
+  },
+);
+
+// Next dev preserves mongoose.models across hot reloads, including obsolete validators.
+if (process.env.NODE_ENV === "development" && mongoose.models.WinterArcConfig) {
+  mongoose.deleteModel("WinterArcConfig");
+}
 
 export const WinterArcConfigModel: Model<WinterArcConfigDocument> =
   (mongoose.models.WinterArcConfig as Model<WinterArcConfigDocument> | undefined) ??

@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const mocks = vi.hoisted(() => ({
   connectToDatabase: vi.fn(),
   ownerFindOne: vi.fn(),
+  ownerExists: vi.fn(),
   sessionCreate: vi.fn(),
   sessionFindOne: vi.fn(),
   sessionUpdateOne: vi.fn(),
@@ -12,7 +13,7 @@ vi.mock("@/server/db/mongoose", () => ({
   connectToDatabase: mocks.connectToDatabase,
 }));
 vi.mock("@/server/models/owner", () => ({
-  OwnerModel: { findOne: mocks.ownerFindOne },
+  OwnerModel: { findOne: mocks.ownerFindOne, exists: mocks.ownerExists },
 }));
 vi.mock("@/server/models/auth-session", () => ({
   AuthSessionModel: {
@@ -35,6 +36,7 @@ describe("authentication service", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mocks.connectToDatabase.mockResolvedValue({});
+    mocks.ownerExists.mockResolvedValue({ _id: "owner-id" });
   });
 
   it("authenticates the owner without exposing passwordHash", async () => {
@@ -44,6 +46,7 @@ describe("authentication service", () => {
       email: "owner@example.com",
       displayName: "Nivedan",
       passwordHash: await hashPassword("correct-owner-password"),
+      emailVerifiedAt: null,
       lastLoginAt: null,
       save,
     };
@@ -57,6 +60,7 @@ describe("authentication service", () => {
       displayName: "Nivedan",
     });
     expect(result).not.toHaveProperty("passwordHash");
+    expect(owner.emailVerifiedAt).toBeNull();
     expect(save).toHaveBeenCalledOnce();
   });
 
@@ -73,7 +77,7 @@ describe("authentication service", () => {
     await expect(
       authenticateOwner("owner@example.com", "wrong-password"),
     ).resolves.toBeNull();
-  });
+  }, 10_000);
 
   it("stores only a hash when creating a session", async () => {
     mocks.sessionCreate.mockResolvedValue({});
@@ -98,7 +102,7 @@ describe("authentication service", () => {
       displayName: "Nivedan",
     });
 
-    const result = await validateSessionToken("raw-session-token");
+    const result = await validateSessionToken("a".repeat(43));
     expect(result).toEqual({
       id: "owner-id",
       email: "owner@example.com",

@@ -140,8 +140,9 @@ server mapping to internal application routes; no browser-provided URL is accept
 
 `POST /api/internal/notifications/evaluate` is a server-to-server endpoint protected
 by `Authorization: Bearer <CRON_SECRET>`. It does not use an owner browser session
-and evaluates only the existing active owner in this single-owner phase. Missing or
-wrong credentials are rejected without exposing the secret. `CRON_SECRET` is
+and now iterates all ACTIVE accounts in stable ID order. One account's failure is
+counted without preventing the remaining eligible accounts from being evaluated.
+Missing or wrong credentials are rejected without exposing the secret. `CRON_SECRET` is
 server-only, optional for local browsing, and must be at least 16 characters when
 configured.
 

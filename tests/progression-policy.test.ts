@@ -9,9 +9,9 @@ import {
   WORKOUT_DAY_XP,
 } from "@/lib/progression/xp-policy";
 
-describe("XP policy V1", () => {
-  it("centralizes every Phase 8 award", () => {
-    expect(PROGRESSION_RULE_VERSION).toBe(1);
+describe("XP policy V2", () => {
+  it("preserves legacy awards and adds the four V2.3 rules", () => {
+    expect(PROGRESSION_RULE_VERSION).toBe(2);
     expect(
       [
         "morning_weight",
@@ -23,6 +23,11 @@ describe("XP policy V1", () => {
         "nutrition",
       ].map((key) => getDailyRuleXp(key)),
     ).toEqual([5, 15, 10, 20, 20, 10, 15]);
+    expect(
+      ["reading", "meditation", "journaling", "stretching"].map((key) =>
+        getDailyRuleXp(key),
+      ),
+    ).toEqual([10, 10, 10, 10]);
     expect(PERFECT_DAY_XP).toBe(25);
     expect(WORKOUT_DAY_XP).toBe(30);
     expect(WEEKLY_WORKOUT_XP).toBe(100);

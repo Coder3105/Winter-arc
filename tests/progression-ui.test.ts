@@ -86,6 +86,13 @@ describe("progression UI", () => {
     expect(markup).toContain("WEEKLY MISSIONS");
     expect(markup).toContain("NO JUNK FOOD");
     expect(markup).toContain("+20 XP");
+    expect(markup).toContain("LEVEL PATH");
+    expect(markup).toContain("CURRENT");
+    expect(markup).toContain("NEXT");
+    expect(markup).toContain("Inspect reward at level 5");
+    expect(markup).toContain("beru.png");
+    expect(markup).toContain("igris.png");
+    expect(markup).toContain("iron.png");
     expect(markup).toContain("GAMIFICATION ONLY");
   });
 

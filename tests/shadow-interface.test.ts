@@ -32,9 +32,10 @@ describe("shadow interface", () => {
       "/status",
       "/achievements",
       "/rewards",
-      "/setup",
+      "/settings",
     ])
       expect(dialog).toContain(`href="${href}"`);
+    expect(dialog).not.toContain('href="/setup"');
     expect(dialog).toContain("CLOSE SESSION");
     expect(html.replace(dialog, "")).not.toContain("CLOSE SESSION");
     expect(html).not.toContain("LOG OUT");

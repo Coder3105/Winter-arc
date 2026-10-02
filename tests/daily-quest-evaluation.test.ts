@@ -196,6 +196,82 @@ describe("Daily Quest rule evaluation", () => {
 });
 
 describe("Daily Quest status and completion", () => {
+  it.each([1, 4, 7, 11])(
+    "derives completion from a custom %s-rule snapshot",
+    (ruleCount) => {
+      const customRules: DailyQuestRuleSnapshot[] = Array.from(
+        { length: ruleCount },
+        (_, index) => ({
+          key: `custom_${index}`,
+          name: `Custom ${index}`,
+          type: "BOOLEAN",
+          target: null,
+          unit: null,
+          requiredFrequency: 7,
+          order: index,
+        }),
+      );
+      const responses = Object.fromEntries(
+        customRules.map((rule) => [rule.key, booleanResponse(true)]),
+      );
+      expect(evaluateDailyQuest(input(responses, { rules: customRules }))).toMatchObject({
+        completedRequiredRules: ruleCount,
+        totalRequiredRules: ruleCount,
+        completionPercent: 100,
+        isPerfectDay: true,
+      });
+    },
+  );
+
+  it.each(["reading", "meditation", "stretching"])(
+    "evaluates the new numeric %s rule from its snapshot target",
+    (key) => {
+      const rule: DailyQuestRuleSnapshot = {
+        key,
+        name: key.toUpperCase(),
+        type: "NUMERIC_MINIMUM",
+        target: 10,
+        unit: "minutes",
+        requiredFrequency: 7,
+        order: 1,
+      };
+      expect(
+        evaluateDailyQuest(input({ [key]: numericResponse(9) }, { rules: [rule] }))
+          .rules[0],
+      ).toMatchObject({ state: "FAIL", completionPercent: 90 });
+      expect(
+        evaluateDailyQuest(input({ [key]: numericResponse(10) }, { rules: [rule] }))
+          .rules[0],
+      ).toMatchObject({ state: "PASS", completionPercent: 100 });
+      expect(evaluateDailyQuest(input({}, { rules: [rule] })).rules[0]).toMatchObject({
+        state: "NOT_RECORDED",
+      });
+    },
+  );
+
+  it("evaluates Journaling with generic binary semantics", () => {
+    const rule: DailyQuestRuleSnapshot = {
+      key: "journaling",
+      name: "JOURNALING",
+      type: "BOOLEAN",
+      target: null,
+      unit: null,
+      requiredFrequency: 7,
+      order: 1,
+    };
+    expect(evaluateDailyQuest(input({}, { rules: [rule] })).rules[0]?.state).toBe(
+      "NOT_RECORDED",
+    );
+    expect(
+      evaluateDailyQuest(input({ journaling: booleanResponse(false) }, { rules: [rule] }))
+        .rules[0]?.state,
+    ).toBe("FAIL");
+    expect(
+      evaluateDailyQuest(input({ journaling: booleanResponse(true) }, { rules: [rule] }))
+        .rules[0]?.state,
+    ).toBe("PASS");
+  });
+
   it("starts at zero of seven without equating missing to failure", () => {
     const result = evaluateDailyQuest(input());
     expect(result).toMatchObject({

@@ -24,7 +24,8 @@ export async function GET(request: Request) {
     if (!matchesCronSecret(authorization, secret)) {
       return failureResponse("UNAUTHORIZED", "Internal authorization failed.", 401);
     }
-    return successResponse(await runNotificationScheduler(), {
+    const cursor = new URL(request.url).searchParams.get("cursor");
+    return successResponse(await runNotificationScheduler(new Date(), { cursor }), {
       headers: { "Cache-Control": "private, no-store" },
     });
   } catch (error) {

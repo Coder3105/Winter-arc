@@ -7,6 +7,8 @@ import "./shadow-system.css";
 import "../../public/system-boot.css";
 import "./scroll-focus.css";
 import "./update-dialog.css";
+import "./avatar-identity.css";
+import "./install-system.css";
 
 export const metadata: Metadata = {
   title: {

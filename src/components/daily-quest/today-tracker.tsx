@@ -43,6 +43,8 @@ function displayNumber(value: number, maximumFractionDigits = 2) {
   return value.toLocaleString("en-US", { maximumFractionDigits });
 }
 
+const WHOLE_NUMBER_RULES = new Set(["steps", "reading", "meditation", "stretching"]);
+
 function RuleState({ state }: { readonly state: EvaluatedDailyQuestRule["state"] }) {
   return (
     <span className={`quest-state quest-state--${state.toLowerCase()}`}>
@@ -184,6 +186,7 @@ export function TodayTracker({
   }
 
   const progress = quest.completionPercent ?? 0;
+  const tracksMorningWeight = quest.rules.some((rule) => rule.key === "morning_weight");
 
   return (
     <div className="today-tracker">
@@ -208,56 +211,58 @@ export function TodayTracker({
         </div>
       </section>
 
-      <SystemPanel eyebrow="SOURCE DATA // TODAY" title="MORNING WEIGHT" glow>
-        <div className="today-weight">
-          <div className="today-weight__status">
-            <div>
-              <span>CANONICAL DAILY WEIGHT</span>
-              <strong>
-                {weight ? `${displayNumber(weight.weightKg, 1)} KG` : "NOT RECORDED"}
-              </strong>
+      {tracksMorningWeight && (
+        <SystemPanel eyebrow="SOURCE DATA // TODAY" title="MORNING WEIGHT" glow>
+          <div className="today-weight">
+            <div className="today-weight__status">
+              <div>
+                <span>CANONICAL DAILY WEIGHT</span>
+                <strong>
+                  {weight ? `${displayNumber(weight.weightKg, 1)} KG` : "NOT RECORDED"}
+                </strong>
+              </div>
+              <RuleState state={weight ? "PASS" : "NOT_RECORDED"} />
             </div>
-            <RuleState state={weight ? "PASS" : "NOT_RECORDED"} />
-          </div>
-          <p className={weight ? "quest-xp is-earned" : "quest-xp"}>+5 XP</p>
-          <form
-            onSubmit={(event) => {
-              event.preventDefault();
-              void saveWeight();
-            }}
-          >
-            <label>
-              <span className="sr-only">Weight in kilograms</span>
-              <input
-                type="number"
-                min="20"
-                max="500"
-                step="0.01"
-                inputMode="decimal"
-                value={weightInput}
-                onChange={(event) => setWeightInput(event.target.value)}
-                placeholder="108.6"
-                disabled={weightPending}
-              />
-              <b>KG</b>
-            </label>
-            <button type="submit" disabled={weightPending || !weightInput}>
-              {weightPending ? "SAVING…" : weight ? "UPDATE" : "LOG WEIGHT"}
-            </button>
-            {weight && (
-              <button
-                type="button"
-                className="today-weight__remove"
-                disabled={weightPending}
-                onClick={() => void removeWeight()}
-              >
-                REMOVE
+            <p className={weight ? "quest-xp is-earned" : "quest-xp"}>+5 XP</p>
+            <form
+              onSubmit={(event) => {
+                event.preventDefault();
+                void saveWeight();
+              }}
+            >
+              <label>
+                <span className="sr-only">Weight in kilograms</span>
+                <input
+                  type="number"
+                  min="20"
+                  max="500"
+                  step="0.01"
+                  inputMode="decimal"
+                  value={weightInput}
+                  onChange={(event) => setWeightInput(event.target.value)}
+                  placeholder="108.6"
+                  disabled={weightPending}
+                />
+                <b>KG</b>
+              </label>
+              <button type="submit" disabled={weightPending || !weightInput}>
+                {weightPending ? "SAVING…" : weight ? "UPDATE" : "LOG WEIGHT"}
               </button>
-            )}
-          </form>
-          <p>Recorded time is preserved when today’s value is corrected.</p>
-        </div>
-      </SystemPanel>
+              {weight && (
+                <button
+                  type="button"
+                  className="today-weight__remove"
+                  disabled={weightPending}
+                  onClick={() => void removeWeight()}
+                >
+                  REMOVE
+                </button>
+              )}
+            </form>
+            <p>Recorded time is preserved when today’s value is corrected.</p>
+          </div>
+        </SystemPanel>
+      )}
 
       <SystemPanel
         eyebrow={`${quest.completedRequiredRules} / ${quest.totalRequiredRules} TASKS COMPLETE`}
@@ -343,11 +348,13 @@ export function TodayTracker({
                             name="value"
                             type="number"
                             min="0"
-                            step={rule.key === "steps" ? "1" : "0.01"}
+                            step={WHOLE_NUMBER_RULES.has(rule.key) ? "1" : "0.01"}
                             defaultValue={
                               typeof rule.actual === "number" ? rule.actual : ""
                             }
-                            inputMode={rule.key === "steps" ? "numeric" : "decimal"}
+                            inputMode={
+                              WHOLE_NUMBER_RULES.has(rule.key) ? "numeric" : "decimal"
+                            }
                             placeholder="0"
                             disabled={pendingKey !== null}
                           />

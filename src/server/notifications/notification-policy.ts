@@ -6,6 +6,11 @@ import type {
 
 export const NOTIFICATION_POLICY_VERSION = 1;
 export const TIME_BASED_DAILY_CEILING = 10;
+export const DAILY_QUEST_EMAIL_WINDOW = {
+  startMinute: 18 * 60,
+  endMinute: 19 * 60,
+} as const;
+export const DAILY_QUEST_EMAIL_MAX_ATTEMPTS = 3;
 export const REMINDER_GRACE_MINUTES = {
   MORNING_WEIGHT: 180,
   HYDRATION: 180,
@@ -97,6 +102,14 @@ export interface EventNotificationContext {
 function timeToMinutes(value: string) {
   const [hour, minute] = value.split(":").map(Number);
   return hour! * 60 + minute!;
+}
+
+export function isDailyQuestEmailWindow(localTime: string) {
+  const minute = timeToMinutes(localTime);
+  return (
+    minute >= DAILY_QUEST_EMAIL_WINDOW.startMinute &&
+    minute < DAILY_QUEST_EMAIL_WINDOW.endMinute
+  );
 }
 
 export function getZonedDateTime(instant: Date, timezone: string) {

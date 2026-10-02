@@ -5,7 +5,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it, vi } from "vitest";
 import Loading from "@/app/loading";
 
-describe("Image-free PWA startup", () => {
+describe("Winter Arc branded PWA startup", () => {
   it("renders the same accessible indeterminate feedback in both startup shells", () => {
     const shells = [
       fs.readFileSync("public/launch.html", "utf8"),
@@ -16,7 +16,8 @@ describe("Image-free PWA startup", () => {
       expect(html).toContain('role="progressbar"');
       expect(html).toContain('aria-label="Loading the System"');
       expect(html).toContain('role="status"');
-      expect(html).not.toMatch(/<img|<svg|aria-valuenow|\d+%/);
+      expect(html).toContain("/icons/system-mark.svg");
+      expect(html).not.toMatch(/aria-valuenow|\d+%/);
     }
     expect(shells[0]).toContain('href="/"');
     expect(shells[0]).toContain("<noscript>");
@@ -46,6 +47,13 @@ describe("Image-free PWA startup", () => {
     expect(css).toContain("prefers-reduced-motion: reduce");
     expect(css).toContain("animation: none !important");
     expect(css).toContain("system-boot-sweep");
+    expect(css).toContain("system-boot-mark");
     expect(css).not.toMatch(/url\(|@import/);
+  });
+
+  it("does not manufacture splash duration with timers", () => {
+    const script = fs.readFileSync("public/launch.js", "utf8");
+    expect(script).not.toMatch(/setTimeout|setInterval/);
+    expect(script).toContain("requestAnimationFrame");
   });
 });

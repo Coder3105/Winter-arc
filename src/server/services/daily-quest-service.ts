@@ -224,7 +224,8 @@ function validateResponse(
     typeof value !== "number" ||
     !Number.isFinite(value) ||
     value < 0 ||
-    (rule.key === "steps" && !Number.isSafeInteger(value))
+    (["steps", "reading", "meditation", "stretching"].includes(rule.key) &&
+      !Number.isSafeInteger(value))
   ) {
     throw new AppError("INVALID_RULE_VALUE");
   }

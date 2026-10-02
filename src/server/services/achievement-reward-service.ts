@@ -21,6 +21,7 @@ import {
   normalizeCalendarDate,
   type AchievementMetrics,
 } from "@/server/calculations";
+import { LEVEL_REWARD_MILESTONES } from "@/lib/progression/level-rewards";
 import { connectToDatabase } from "@/server/db/mongoose";
 import { AppError } from "@/server/errors/app-error";
 import { AchievementUnlockModel } from "@/server/models/achievement-unlock";
@@ -42,7 +43,6 @@ import { getProfile } from "./profile-service";
 import { getWinterArcConfig, type WinterArcConfigDto } from "./winter-arc-service";
 
 const REWARD_VERSION = 1;
-const LEVEL_REWARD_THRESHOLDS = [5, 10, 15, 20, 25, 30] as const;
 
 interface Phase9Context {
   readonly profile: NonNullable<Awaited<ReturnType<typeof getProfile>>>;
@@ -367,14 +367,16 @@ function desiredRewards(
       description: "Configured weekly workout mission cleared.",
       challengeWeek: week,
     })),
-    ...LEVEL_REWARD_THRESHOLDS.filter((level) => derived.level >= level).map((level) => ({
-      rewardType: "LEVEL_MILESTONE" as const,
-      rewardKey: `level:${level}`,
-      sourceType: "PROGRESSION_LEVEL",
-      sourceKey: `level:${level}`,
-      title: `LEVEL ${level} MILESTONE`,
-      description: "Digital System emblem unlocked.",
-    })),
+    ...LEVEL_REWARD_MILESTONES.filter(({ level }) => derived.level >= level).map(
+      ({ level }) => ({
+        rewardType: "LEVEL_MILESTONE" as const,
+        rewardKey: `level:${level}`,
+        sourceType: "PROGRESSION_LEVEL",
+        sourceKey: `level:${level}`,
+        title: `LEVEL ${level} MILESTONE`,
+        description: "Digital System emblem unlocked.",
+      }),
+    ),
   ];
 }
 

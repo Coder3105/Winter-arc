@@ -3,14 +3,23 @@
 ## Purpose and phase boundary
 
 Phase 4 is the first persisted daily tracking workflow. It evaluates the enabled
-rules from the owner's active Winter Arc configuration for one local calendar day.
-It remains single-owner, but every query is scoped by the authenticated `userId`.
+rules from the authenticated user's active Winter Arc configuration for one local
+calendar day. Each record has one owner and every query is scoped by authenticated
+`userId`.
 
 Phase 7 now supplies the Morning Weight rule from a genuine daily WeightRecord; the
 quest aggregate stores only the synchronized response needed by the existing evaluator.
 Workout is intentionally excluded because it belongs to the separate 4/7 weekly
 mission. This phase also adds no calendar UI, streaks, XP, ranks,
 rewards, punishments, reports, reminders, or offline behavior.
+
+V2.3 adds a centralized catalogue without changing this persistence boundary. New
+onboarding may select any subset of Morning Weight, Sleep, Hydration, Steps,
+Nutrition, No Junk Food, No Fap, Reading, Meditation, Journaling, and Stretching.
+The catalogue is shared code; only selected configuration and confirmed targets are
+stored per user. No Fap is private and opt-in. Recommended initial UI selection is
+Sleep, Hydration, Steps, and Nutrition, but their numeric targets remain blank until
+the user explicitly enters them.
 
 ## DailyQuestRecord
 
@@ -48,7 +57,9 @@ Responses are separate source inputs. Boolean/logging rules store a boolean;
 numeric-minimum rules store a finite nonnegative number. Steps additionally require
 a safe integer. The server verifies that the key exists in today's snapshot and that
 the value matches its type. Unknown rules, negative/non-finite values, fractional
-steps, and wrong types are rejected. The browser never supplies ownership.
+steps, and wrong types are rejected. The browser never supplies ownership. Reading,
+Meditation, and Stretching also require safe-integer whole minutes and pass at their
+snapshotted configured minimum. Journaling uses the existing binary semantics.
 
 Hydration is stored as an absolute litre value. The UI converts +250 ml to +0.25 L
 and +500 ml to +0.5 L, then sends the resulting absolute amount. Buttons are disabled
@@ -63,7 +74,11 @@ claim. Nutrition is binary only; there is no calorie, macro, meal, or food datab
 
 `evaluateDailyQuest` is framework- and database-independent. It delegates boolean,
 numeric minimum, sleep, hydration, steps, and compliance math to the Phase 3 engine.
-It does not store percentages or duplicate formulas.
+It does not store percentages or duplicate formulas. The evaluator, Today list,
+completion denominator, Perfect Day, calendar, rule streaks, and weekly rule metrics
+all consume the actual immutable snapshot length. Morning Weight appears in Today
+and affects perfection only when selected; its PASS state still comes exclusively
+from `WeightRecord`.
 
 Each rule returns its raw actual value, snapshot target, state, raw completion
 percentage, and UI-clamped completion percentage. A missing response remains

@@ -33,6 +33,7 @@ const schema = new Schema<NotificationPreferencesDocument>(
     userId: { type: Schema.Types.ObjectId, required: true, ref: "Owner" },
     timezoneSnapshot: { type: String, required: true, trim: true, maxlength: 100 },
     enabled: { type: Boolean, required: true, default: false },
+    dailyQuestEmailReminder: { type: Boolean, required: true, default: false },
     privacyMode: {
       type: String,
       required: true,
@@ -88,6 +89,7 @@ const schema = new Schema<NotificationPreferencesDocument>(
 );
 
 schema.index({ userId: 1 }, { unique: true, name: "unique_notification_preferences" });
+schema.index({ dailyQuestEmailReminder: 1, userId: 1 });
 
 export const NotificationPreferencesModel: Model<NotificationPreferencesDocument> =
   (mongoose.models.NotificationPreferences as

@@ -21,4 +21,15 @@ describe("profile validation", () => {
   it("rejects non-positive height", () => {
     expect(() => profileInputSchema.parse({ ...validProfile, heightCm: 0 })).toThrow();
   });
+
+  it("allows optional physical fields to remain unavailable", () => {
+    expect(
+      profileInputSchema.safeParse({
+        ...validProfile,
+        ageAtBaseline: null,
+        sex: null,
+        heightCm: null,
+      }).success,
+    ).toBe(true);
+  });
 });

@@ -13,9 +13,10 @@ const DESTINATIONS = [
   ["REPORTS", "/reports", "Weekly reports"],
   ["PROFILE", "/profile", "Player profile"],
   ["STATUS", "/status", "Level & rank"],
+  ["GUILD", "/guild", "Private System network"],
   ["ACHIEVEMENTS", "/achievements", "Titles & milestones"],
   ["REWARDS", "/rewards", "Reward vault"],
-  ["CONFIGURATION", "/setup", "System settings"],
+  ["CONFIGURATION", "/settings", "System settings"],
 ] as const;
 
 export function SystemMenu({

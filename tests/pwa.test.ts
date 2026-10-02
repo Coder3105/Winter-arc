@@ -7,6 +7,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 
 import manifest from "@/app/manifest";
+import InstallPage from "@/app/install/page";
 import { DevicePushSettings } from "@/components/notifications/device-push-settings";
 import { InstallGuide } from "@/components/pwa/install-guide";
 import { isSafeInternalPath } from "@/lib/pwa/safe-path";
@@ -92,7 +93,10 @@ describe("Phase 12 installable PWA", () => {
   });
 
   it("renders install and device-push states without requesting permission", async () => {
+    const installPage = renderToStaticMarkup(createElement(InstallPage));
     const install = renderToStaticMarkup(createElement(InstallGuide));
+    expect(installPage).toContain("/icons/system-mark.svg");
+    expect(installPage).toContain("INSTALL WINTER ARC");
     expect(install).toContain("BROWSER MODE");
     expect(install).toContain("secure supported browser");
     const push = renderToStaticMarkup(
@@ -120,9 +124,13 @@ describe("Phase 12 installable PWA", () => {
   });
 
   it("keeps install, offline mutation, and update activation user-controlled", async () => {
-    const [installSource, runtimeSource] = await Promise.all([
+    const [installSource, installControllerSource, runtimeSource] = await Promise.all([
       fs.readFile(
         path.join(process.cwd(), "src", "components", "pwa", "install-guide.tsx"),
+        "utf8",
+      ),
+      fs.readFile(
+        path.join(process.cwd(), "src", "lib", "pwa", "install-system.ts"),
         "utf8",
       ),
       fs.readFile(
@@ -130,10 +138,11 @@ describe("Phase 12 installable PWA", () => {
         "utf8",
       ),
     ]);
-    expect(installSource).toContain('window.addEventListener("beforeinstallprompt"');
-    expect(installSource.indexOf("await prompt.prompt()")).toBeGreaterThan(
-      installSource.indexOf("async function install()"),
+    expect(installControllerSource).toContain('"beforeinstallprompt"');
+    expect(installControllerSource.indexOf("await pending.prompt()")).toBeGreaterThan(
+      installControllerSource.indexOf("async promptInstall()"),
     );
+    expect(installSource).toContain("installSystem.promptInstall()");
     expect(runtimeSource).toContain('register("/sw.js", { scope: "/" })');
     expect(runtimeSource).toContain('registration.addEventListener("updatefound"');
     expect(runtimeSource).toContain('waiting.postMessage({ type: "SKIP_WAITING" })');

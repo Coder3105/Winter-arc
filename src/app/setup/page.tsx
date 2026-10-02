@@ -1,17 +1,16 @@
+import { redirect } from "next/navigation";
+
 import { AuthenticatedHeader } from "@/components/layout/authenticated-header";
 import { SetupFlow } from "@/components/setup/setup-flow";
 import { requirePageOwner } from "@/server/auth/request-auth";
-import { getBaselineAssessment } from "@/server/services/body-composition-service";
-import { getProfile } from "@/server/services/profile-service";
-import { getWinterArcConfig } from "@/server/services/winter-arc-service";
+import { getOnboardingDraft } from "@/server/services/onboarding-service";
+import { getSetupState } from "@/server/services/setup-service";
 
 export default async function SetupPage() {
   const owner = await requirePageOwner();
-  const [profile, config, baseline] = await Promise.all([
-    getProfile(owner.id),
-    getWinterArcConfig(owner.id),
-    getBaselineAssessment(owner.id),
-  ]);
+  const setup = await getSetupState(owner.id);
+  if (setup.complete) redirect("/today");
+  const draft = await getOnboardingDraft(owner.id);
 
   return (
     <main className="app-shell">
@@ -24,7 +23,7 @@ export default async function SetupPage() {
           <p>PHASE 02 // OWNER PROTOCOL</p>
           <h1>SYSTEM CONFIGURATION</h1>
         </div>
-        <SetupFlow initialProfile={profile} initialConfig={config} baseline={baseline} />
+        <SetupFlow email={owner.email} initialDraft={draft} />
       </div>
     </main>
   );
