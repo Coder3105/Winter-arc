@@ -69,6 +69,7 @@ function preferencesDto(
   const source = document ?? DEFAULT_NOTIFICATION_PREFERENCES;
   return {
     enabled: source.enabled,
+    dailyQuestEmailReminder: source.dailyQuestEmailReminder ?? false,
     timezone,
     privacyMode: source.privacyMode,
     quietHours: {
@@ -106,6 +107,7 @@ function asPolicyPreferences(
   const source = document ?? DEFAULT_NOTIFICATION_PREFERENCES;
   return notificationPreferencesInputSchema.parse({
     enabled: source.enabled,
+    dailyQuestEmailReminder: source.dailyQuestEmailReminder ?? false,
     privacyMode: source.privacyMode,
     quietHours: {
       enabled: source.quietHours.enabled,

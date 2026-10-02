@@ -9,6 +9,7 @@ describe("notification preference validation", () => {
   it("defaults to explicit opt-in with editable non-medical starter times", () => {
     expect(DEFAULT_NOTIFICATION_PREFERENCES).toMatchObject({
       enabled: false,
+      dailyQuestEmailReminder: false,
       privacyMode: "PRIVATE",
       quietHours: { enabled: false },
       morningWeight: { time: "09:00" },
@@ -71,5 +72,16 @@ describe("notification preference validation", () => {
     const keys = Object.keys(DEFAULT_NOTIFICATION_PREFERENCES);
     expect(keys).not.toContain("noFap");
     expect(keys).not.toContain("noJunkFood");
+  });
+
+  it("keeps the email reminder an independent explicit opt-in", () => {
+    expect(DEFAULT_NOTIFICATION_PREFERENCES.dailyQuestEmailReminder).toBe(false);
+    expect(
+      notificationPreferencesInputSchema.safeParse({
+        ...DEFAULT_NOTIFICATION_PREFERENCES,
+        enabled: false,
+        dailyQuestEmailReminder: true,
+      }).success,
+    ).toBe(true);
   });
 });

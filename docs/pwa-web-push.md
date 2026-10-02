@@ -7,6 +7,11 @@ Phase 11 remains authoritative for when and why it exists, quiet hours, grace wi
 daily ceilings, dedupe, categories, and safe/private copy. Device delivery adds no XP,
 health judgment, source mutation, new reminder category, or Phase 13 polish.
 
+V2.7 email reminders are a separate opt-in channel. Their fixed local 6 PM policy,
+SMTP delivery ledger, and verified-email eligibility neither read nor mutate Web
+Push subscriptions, the global application reminder toggle, or Phase 11 push
+delivery states. See [scheduled-email-reminders.md](scheduled-email-reminders.md).
+
 ## Manifest, icons, and installation
 
 `src/app/manifest.ts` publishes ID, start URL, and scope `/`, standalone display,
@@ -14,6 +19,22 @@ the black/navy theme, and 192px, 512px, and maskable PNG icons. The 180px Apple 
 icon and favicon are generated from the project's original `system-mark.svg`; the
 visual reference PNG is not used. Root metadata enables Apple standalone mode and
 the viewport uses `viewport-fit=cover`. Shared shells and banners respect safe areas.
+
+V2.5 keeps the app icon separate from user identity: every install surface uses the
+original geometric Winter Arc mark, never a selected avatar. The static PWA launch
+document and App Router loading boundary display the same mark with visible text and
+restrained CSS motion. `/launch.html` redirects after a paint opportunity and has no
+timer-based minimum duration. Native operating-system splash behavior remains
+platform-controlled through the manifest, icons, theme/background colors, and Apple
+metadata; the app-controlled loader begins only after web execution starts.
+
+V2.6 adds a mobile-browser `INSTALL SYSTEM` utility without changing manifest or
+cache fundamentals. One shared controller defers `beforeinstallprompt`, invokes it
+only from a user action, clears it after one use, and reacts immediately to
+`appinstalled`. iPhone/iPad uses an accessible browser-generic Share/menu to Add to
+Home Screen instruction dialog rather than simulated installation. Standalone mode,
+desktop contexts, `/install`, active form input, and a seven-day namespaced local
+dismissal suppress the automatic surface. See [install-system.md](install-system.md).
 
 `/install` detects installed/standalone state. Chromium's `beforeinstallprompt` is
 captured but invoked only from the explicit install button. Safari on iPhone receives
@@ -41,7 +62,7 @@ worker produces `SYSTEM UPDATE AVAILABLE`; only an explicit Update action sends
 
 ## Device subscription and VAPID
 
-`PushSubscriptionRecord` stores authenticated owner ID, sensitive endpoint, SHA-256
+`PushSubscriptionRecord` stores authenticated user ID, sensitive endpoint, SHA-256
 endpoint hash, browser keys, expiration, ACTIVE/INVALID state, last-seen/success/
 failure timestamps, and failure count. Endpoint hash is unique and an owner/status
 index supports multi-device fanout. Endpoint and browser keys are excluded from
@@ -71,7 +92,9 @@ Authenticated private/no-store APIs are:
 Both mutations require a same-origin `Origin` header in addition to the opaque owner
 session. The permission prompt occurs only after the owner presses Enable Device
 Push. Denial is reported without repeatedly prompting. Unsubscribe changes only the
-device record, never Phase 11 reminder settings.
+device record, never Phase 11 reminder settings. An endpoint hash remains globally
+unique: a second account receives a conflict and the record is never silently
+reassigned. Logout never transfers ownership.
 
 ## Transport, privacy, and clicks
 
@@ -82,6 +105,13 @@ dedupe/source key, private habit name, note, or measured value. A 404/410 respon
 invalidates only the terminal subscription; transient failures keep the device
 active. At least one success yields `PUSH_DELIVERED`; zero devices/configuration yields
 `PUSH_UNAVAILABLE`; all transient failures yield `PUSH_FAILED`.
+
+The external-safe payload also carries a SHA-256 intended-user binding for a local equality
+check. Before showing its title, body, tag, or path, the service worker calls the
+private no-store current-session endpoint. A logged-out browser, a different account,
+an offline check, or a legacy/malformed payload receives only the generic title/body
+and notifications path. This prevents a shared browser from showing one account's
+push copy to another account while keeping endpoint ownership stable.
 
 The service worker supplies a generic notification for missing/malformed payloads.
 Notification clicks accept only a fixed internal route set, reject external,

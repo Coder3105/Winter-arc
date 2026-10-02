@@ -161,6 +161,10 @@ describe("progression reconciliation", () => {
     ["no_fap", true, null, 20],
     ["steps", 10_000, 10_000, 10],
     ["nutrition", true, null, 15],
+    ["reading", 20, 20, 10],
+    ["meditation", 10, 10, 10],
+    ["journaling", true, null, 10],
+    ["stretching", 10, 10, 10],
   ])("activates one %s event with snapshotted XP", async (key, value, target, xp) => {
     await reconcileDailyQuestProgression(
       "owner-1",
@@ -171,7 +175,7 @@ describe("progression reconciliation", () => {
     expect(ruleEvent(key as string)).toMatchObject({
       status: "ACTIVE",
       xp,
-      ruleVersion: 1,
+      ruleVersion: 2,
     });
   });
 
@@ -228,6 +232,35 @@ describe("progression reconciliation", () => {
     expect(
       [...mocks.events.keys()].filter((key) => key.startsWith("DAILY_RULE")),
     ).toHaveLength(1);
+  });
+
+  it("reactivates a historical V1 event without changing its XP or version", async () => {
+    const earnedAt = new Date("2026-09-30T01:00:00Z");
+    const legacy = {
+      sourceType: "DAILY_RULE",
+      sourceKey: "daily-rule:2026-09-30:sleep",
+      eventType: "DAILY_RULE_PASSED",
+      status: "REVOKED",
+      xp: 15,
+      ruleVersion: 1,
+      earnedAt,
+      revokedAt: new Date("2026-09-30T02:00:00Z"),
+    };
+    mocks.events.set("DAILY_RULE|daily-rule:2026-09-30:sleep", legacy);
+    await reconcileDailyQuestProgression(
+      "owner-1",
+      config.id,
+      quest("sleep", 7, 7),
+      new Date("2026-09-30T03:00:00Z"),
+    );
+    expect(ruleEvent("sleep")).toBe(legacy);
+    expect(ruleEvent("sleep")).toMatchObject({
+      status: "ACTIVE",
+      xp: 15,
+      ruleVersion: 1,
+      earnedAt,
+      revokedAt: null,
+    });
   });
 
   it("keeps absent and failed rules inactive and safely snapshots unknown rules at zero", async () => {

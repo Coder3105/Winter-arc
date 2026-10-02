@@ -21,7 +21,8 @@ export async function POST(request: Request) {
       );
     if (!matchesCronSecret(authorization, secret))
       return failureResponse("UNAUTHORIZED", "Internal authorization failed.", 401);
-    const result = await runNotificationScheduler();
+    const cursor = new URL(request.url).searchParams.get("cursor");
+    const result = await runNotificationScheduler(new Date(), { cursor });
     return successResponse(result, {
       status: 200,
       headers: { "Cache-Control": "private, no-store" },

@@ -117,22 +117,54 @@ self.addEventListener("push", (event) => {
   } catch {
     payload = {};
   }
-  const title =
-    typeof payload.title === "string" ? payload.title.slice(0, 120) : "Winter Arc";
-  const body =
-    typeof payload.body === "string"
-      ? payload.body.slice(0, 500)
-      : "A System update is available.";
-  const path = safeActionPath(payload.data?.path);
   event.waitUntil(
-    self.registration.showNotification(title, {
-      body,
-      tag:
-        typeof payload.tag === "string" ? payload.tag.slice(0, 100) : "winter-arc-update",
-      icon: "/icons/icon-192.png",
-      badge: "/icons/badge-96.png",
-      data: { path },
-    }),
+    (async () => {
+      // A subscription stays with its owner after logout. Never show that owner's
+      // details to a different signed-in user, or trust offline/legacy payloads.
+      let sameUser = false;
+      if (/^[a-f0-9]{64}$/.test(payload.recipientUserHash ?? "")) {
+        try {
+          const response = await fetch("/api/v1/auth/me", {
+            credentials: "same-origin",
+            cache: "no-store",
+          });
+          const session = response.ok ? await response.json() : null;
+          const currentUserId =
+            session?.success === true ? session.data?.owner?.id : null;
+          if (typeof currentUserId === "string") {
+            const digest = await crypto.subtle.digest(
+              "SHA-256",
+              new TextEncoder().encode(currentUserId),
+            );
+            const currentUserHash = Array.from(new Uint8Array(digest))
+              .map((byte) => byte.toString(16).padStart(2, "0"))
+              .join("");
+            sameUser = currentUserHash === payload.recipientUserHash;
+          }
+        } catch {
+          sameUser = false;
+        }
+      }
+      const title =
+        sameUser && typeof payload.title === "string"
+          ? payload.title.slice(0, 120)
+          : "Winter Arc";
+      const body =
+        sameUser && typeof payload.body === "string"
+          ? payload.body.slice(0, 500)
+          : "A System update is available.";
+      const path = sameUser ? safeActionPath(payload.data?.path) : "/notifications";
+      return self.registration.showNotification(title, {
+        body,
+        tag:
+          sameUser && typeof payload.tag === "string"
+            ? payload.tag.slice(0, 100)
+            : "winter-arc-update",
+        icon: "/icons/icon-192.png",
+        badge: "/icons/badge-96.png",
+        data: { path },
+      });
+    })(),
   );
 });
 

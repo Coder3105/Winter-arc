@@ -24,9 +24,9 @@ but remains available for audit. Reactivation changes the same event back to ACT
 clears `revokedAt`, and preserves its original `earnedAt`, `xp`, `ruleVersion`, and
 `createdAt`. No mutable total-XP counter is authoritative.
 
-## XP policy V1
+## XP policy V2
 
-`PROGRESSION_RULE_VERSION` is 1. Policy values live in one browser-safe module and
+`PROGRESSION_RULE_VERSION` is 2. Policy values live in one browser-safe module and
 are copied into each new event:
 
 | Source                         |  XP |
@@ -38,18 +38,24 @@ are copied into each new event:
 | No Fap                         |  20 |
 | Steps                          |  10 |
 | Nutrition                      |  15 |
+| Reading                        |  10 |
+| Meditation                     |  10 |
+| Journaling                     |  10 |
+| Stretching                     |  10 |
 | Perfect Day                    |  25 |
 | Distinct Workout Day           |  30 |
 | Secured Weekly Workout Mission | 100 |
 
 An unknown future daily-rule key receives zero XP and does not fail reconciliation.
 Adding a new earnable rule therefore requires an explicit policy version. Historical
-events retain their stored V1 value if a later policy changes.
+V1 events retain their stored XP and `ruleVersion`; reconciliation reactivates the
+same ledger identity without recalculating it. Legacy rule amounts and the 25 XP
+Perfect Day bonus are unchanged in V2.
 
-Today's maximum Daily Quest XP is calculated from its immutable rule snapshot. The
-default seven-rule snapshot provides 95 rule XP plus the 25 XP perfect bonus, or 120
-XP. Disabled rules are absent and reduce the possible total; current configuration
-never reinterprets an older snapshot.
+Today's maximum Daily Quest XP is calculated from its immutable rule snapshot. It is
+never a hardcoded seven-rule or 120 XP value. Disabled/unselected rules are absent
+and reduce the possible total; current configuration never reinterprets an older
+snapshot.
 
 ## Reconciliation and reversibility
 

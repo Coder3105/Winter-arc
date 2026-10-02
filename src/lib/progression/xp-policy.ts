@@ -1,4 +1,4 @@
-export const PROGRESSION_RULE_VERSION = 1;
+export const PROGRESSION_RULE_VERSION = 2;
 
 export const DAILY_RULE_XP_V1 = {
   morning_weight: 5,
@@ -10,13 +10,21 @@ export const DAILY_RULE_XP_V1 = {
   nutrition: 15,
 } as const satisfies Readonly<Record<string, number>>;
 
+export const DAILY_RULE_XP_V2 = {
+  ...DAILY_RULE_XP_V1,
+  reading: 10,
+  meditation: 10,
+  journaling: 10,
+  stretching: 10,
+} as const satisfies Readonly<Record<string, number>>;
+
 export const PERFECT_DAY_XP = 25;
 export const WORKOUT_DAY_XP = 30;
 export const WEEKLY_WORKOUT_XP = 100;
 
 export function getDailyRuleXp(ruleKey: string): number {
-  return Object.prototype.hasOwnProperty.call(DAILY_RULE_XP_V1, ruleKey)
-    ? DAILY_RULE_XP_V1[ruleKey as keyof typeof DAILY_RULE_XP_V1]
+  return Object.prototype.hasOwnProperty.call(DAILY_RULE_XP_V2, ruleKey)
+    ? DAILY_RULE_XP_V2[ruleKey as keyof typeof DAILY_RULE_XP_V2]
     : 0;
 }
 

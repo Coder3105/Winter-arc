@@ -10,7 +10,7 @@ import type { NotificationPreferencesResult } from "@/server/services/notificati
 type Available = Extract<NotificationPreferencesResult, { kind: "AVAILABLE" }>;
 type PreferenceSection = Exclude<
   keyof NotificationPreferencesInput,
-  "enabled" | "privacyMode"
+  "enabled" | "dailyQuestEmailReminder" | "privacyMode"
 >;
 
 function Toggle({
@@ -39,6 +39,7 @@ export function NotificationSettings({ initial }: { readonly initial: Available 
   const preference = initial.preferences;
   const [value, setValue] = useState<NotificationPreferencesInput>(() => ({
     enabled: preference.enabled,
+    dailyQuestEmailReminder: preference.dailyQuestEmailReminder,
     privacyMode: preference.privacyMode,
     quietHours: { ...preference.quietHours },
     dailyQuest: { ...preference.dailyQuest },
@@ -215,6 +216,22 @@ export function NotificationSettings({ initial }: { readonly initial: Available 
           />
         </fieldset>
       </div>
+
+      <fieldset className="notification-settings__wide notification-settings__email">
+        <legend>EMAIL REMINDERS</legend>
+        <Toggle
+          label="DAILY QUEST REMINDER AT 6 PM"
+          checked={value.dailyQuestEmailReminder}
+          onChange={(dailyQuestEmailReminder) =>
+            setValue((current) => ({ ...current, dailyQuestEmailReminder }))
+          }
+        />
+        <p>
+          Receive an email at 6 PM in your configured timezone when today&apos;s Daily
+          Quest is still incomplete. Email reminders are separate from application and Web
+          Push reminders.
+        </p>
+      </fieldset>
 
       <fieldset className="notification-settings__wide">
         <legend>QUIET HOURS</legend>

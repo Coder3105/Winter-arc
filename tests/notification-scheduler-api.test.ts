@@ -2,16 +2,20 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
   environment: vi.fn(),
+  applicationOrigin: vi.fn(),
   connect: vi.fn(),
   ownerFind: vi.fn(),
-  ownerSort: vi.fn(),
+  ownerLimit: vi.fn(),
   evaluate: vi.fn(),
 }));
 
-vi.mock("@/lib/env/server", () => ({ getServerEnvironment: mocks.environment }));
+vi.mock("@/lib/env/server", () => ({
+  getServerEnvironment: mocks.environment,
+  getConfiguredApplicationOrigin: mocks.applicationOrigin,
+}));
 vi.mock("@/server/db/mongoose", () => ({ connectToDatabase: mocks.connect }));
 vi.mock("@/server/models/owner", () => ({
-  OwnerModel: { findOne: mocks.ownerFind },
+  OwnerModel: { find: mocks.ownerFind },
 }));
 vi.mock("@/server/services/notification-service", () => ({
   evaluateAllNotifications: mocks.evaluate,
@@ -19,6 +23,8 @@ vi.mock("@/server/services/notification-service", () => ({
 
 import { POST } from "@/app/api/internal/notifications/evaluate/route";
 import { GET } from "@/app/api/internal/notifications/cron/route";
+import { ACTIVE_ACCOUNT_FILTER } from "@/server/auth/account-status";
+import { runNotificationScheduler } from "@/server/services/notification-scheduler-service";
 
 const secret = "phase-11-test-secret";
 
@@ -26,9 +32,12 @@ describe("internal notification scheduler security", () => {
   beforeEach(() => {
     vi.resetAllMocks();
     mocks.environment.mockReturnValue({ CRON_SECRET: secret });
+    mocks.applicationOrigin.mockReturnValue(undefined);
     mocks.connect.mockResolvedValue(undefined);
-    mocks.ownerFind.mockReturnValue({ sort: mocks.ownerSort });
-    mocks.ownerSort.mockResolvedValue({ _id: { toString: () => "owner-1" } });
+    mocks.ownerFind.mockReturnValue({
+      select: () => ({ sort: () => ({ limit: mocks.ownerLimit }) }),
+    });
+    mocks.ownerLimit.mockResolvedValue([{ _id: { toString: () => "owner-1" } }]);
     mocks.evaluate.mockResolvedValue({
       timeBased: { kind: "AVAILABLE", generated: 0 },
       eventBased: { generated: 0 },
@@ -61,7 +70,7 @@ describe("internal notification scheduler security", () => {
     expect(await response.text()).not.toContain(secret);
   });
 
-  it("accepts the correct secret, scopes to the single active owner, and is retry-safe", async () => {
+  it("accepts the correct secret, scopes each active account, and is retry-safe", async () => {
     const request = () =>
       new Request("http://local", {
         method: "POST",
@@ -72,10 +81,25 @@ describe("internal notification scheduler security", () => {
     expect(first.status).toBe(200);
     expect(second.status).toBe(200);
     expect(first.headers.get("cache-control")).toBe("private, no-store");
-    expect(mocks.ownerFind).toHaveBeenCalledWith({ isActive: true });
+    expect(mocks.ownerFind).toHaveBeenCalledWith(ACTIVE_ACCOUNT_FILTER);
     expect(mocks.evaluate).toHaveBeenCalledTimes(2);
     expect(mocks.evaluate).toHaveBeenNthCalledWith(1, "owner-1", expect.any(Date));
     expect(mocks.evaluate).toHaveBeenNthCalledWith(2, "owner-1", expect.any(Date));
+  });
+
+  it("evaluates separate users and continues after a sanitized per-user failure", async () => {
+    mocks.ownerLimit.mockResolvedValue([
+      { _id: { toString: () => "user-a" } },
+      { _id: { toString: () => "user-b" } },
+    ]);
+    mocks.evaluate.mockRejectedValueOnce(new Error("private error"));
+    await expect(runNotificationScheduler()).resolves.toMatchObject({
+      processedUsers: 2,
+      providerConfigured: false,
+      push: { usersEvaluated: 1, usersFailed: 1 },
+    });
+    expect(mocks.evaluate).toHaveBeenNthCalledWith(1, "user-a", expect.any(Date));
+    expect(mocks.evaluate).toHaveBeenNthCalledWith(2, "user-b", expect.any(Date));
   });
 
   it("offers the same protected scheduler through the Vercel-compatible GET adapter", async () => {

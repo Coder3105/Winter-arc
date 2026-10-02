@@ -130,10 +130,33 @@ is authoritative.
 `progression-service.ts` reconciles evaluated Daily Quest records, distinct workout
 dates, and secured challenge weeks after their source mutations. Ordered source-first
 writes plus repeatable convergence avoid a fragile distributed transaction. Pure
-level/rank math lives under `src/server/calculations/progression`; centralized V1 XP
-policy lives under `src/lib/progression`. The owner-scoped, private/no-store API and
+level/rank math lives under `src/server/calculations/progression`; centralized,
+versioned XP policy lives under `src/lib/progression`. The owner-scoped, private/no-store API and
 server-rendered pages consume a sanitized summary projection. See
 [progression.md](progression.md).
+
+## New-user initialization (V2.3)
+
+`/setup` is the single onboarding entry. Completed users are redirected to `/today`.
+Blank users receive no profile metrics, timezone, start date, rules, targets, or
+assessment from the original account. Temporary explicit saves live in one
+owner-scoped `OnboardingDraft`; this separate draft is necessary because profile and
+active protocol documents intentionally require activation-safe fields and must not
+contain fake dates, zero metrics, or partial ACTIVE state.
+
+`onboarding-service.ts` owns draft upsert and activation. Route ownership always
+comes from the opaque session. Activation builds rule configuration from the shared
+browser-safe catalogue, writes nullable optional metrics, creates an ACTIVE fixed
+90-day `WinterArcConfig`, updates the account display name, and removes the draft.
+A partial unique active-protocol index plus atomic upsert makes concurrent requests
+converge. If an active protocol already exists, activation returns it and performs no
+profile/config rewrite; this is the existing-owner preservation guard.
+
+The catalogue is global code, while selected rule keys and confirmed targets are
+stored per configuration. Daily records still snapshot their enabled rules, so new
+selection never rewrites history. Calendar, streak, report, notification-count, and
+progression projections consume those snapshots without a seven-rule assumption.
+See [onboarding-routine-selection.md](onboarding-routine-selection.md).
 
 ## Achievement, reward, and recovery projections (Phase 9)
 
@@ -170,13 +193,15 @@ Winter Arc cache. It bypasses every API request, never persists navigation HTML,
 caches only the public offline document, icons, manifest, and versioned Next static
 assets. Offline writes are blocked at the UI boundary and there is no mutation queue.
 
-`PushSubscriptionRecord` stores multiple owner devices under hashed unique endpoint
+`PushSubscriptionRecord` stores multiple user devices under hashed unique endpoint
 identity. Endpoint and key fields are excluded from default Mongoose selection.
 Authenticated same-origin APIs expose only configuration state, public VAPID key,
 and counts. `WebPushNotificationTransport` fans out the Phase 11 external-safe
-payload, invalidates only terminal 404/410 subscriptions, and records aggregate
+payload with a one-way intended-user binding, invalidates only terminal 404/410 subscriptions, and records aggregate
 delivery status without replacing the private inbox. The VAPID private key remains
-server-only. See [pwa-web-push.md](pwa-web-push.md).
+server-only. Before displaying payload details, the service worker confirms that the
+current authenticated session belongs to the intended user. A logged-out, offline,
+or different-user browser sees generic content only. See [pwa-web-push.md](pwa-web-push.md).
 
 ## Phase 13 release boundary
 
@@ -204,6 +229,22 @@ weight-linked XP reversibility, distinct workout days, weekly qualification reve
 constructive recovery, reporting, notification dedupe, achievements, ranks, Week 13,
 and post-Day-90 behavior. It imports authoritative policies and pure calculations and
 does not connect to MongoDB or mutate the real owner.
+
+## V2.7 scheduled email boundary
+
+The existing notification scheduler remains the sole cron entry point and now uses
+bounded, ordered owner batches with an optional continuation cursor. In-app/Web Push
+evaluation remains unchanged. A separate email preference and
+`DailyQuestEmailDelivery` ledger are necessary because SMTP has an independent
+delivery lifecycle; the ledger's unique owner/config/local-date/type index and atomic
+PENDING-or-FAILED to SENDING claim provide multi-instance deduplication.
+
+The service resolves each instant through the profile IANA timezone, admits only the
+local 18:0018:59 window and active challenge dates, and delegates completion to the
+existing Daily Quest evaluator. It rechecks mutable preference/completion facts just
+before the awaited `EmailProvider` call. The template exposes only aggregate counts
+and a canonical server-configured `/today` URL. See
+[scheduled-email-reminders.md](scheduled-email-reminders.md).
 
 ## Intentionally deferred architecture
 
@@ -237,18 +278,76 @@ timing, quiet-hour, privacy, category, ceiling, or dedupe policy. It intentional
 does not add offline synchronization. Notification permission and device delivery
 remain distinct from reminder preferences and domain services.
 
-## Single-owner authentication
+## V2.2 multi-user authentication
 
-Winter Arc has one owner rather than multi-user roles. The owner is created only by
-the explicit `npm run bootstrap:owner` command. Passwords are hashed with bcrypt at
-cost 12 and the model excludes `passwordHash` from ordinary queries.
+The existing `owners` collection is now the account collection; `UserModel` is an
+alias over that same model and does not create a second identity or collection.
+Accounts have a canonical unique `emailNormalized`, lifecycle status (`ACTIVE`,
+`PENDING_VERIFICATION`, or `DISABLED`), nullable verification metadata, and an
+immutable original-owner marker. Passwords remain bcrypt cost 12 hashes and are
+excluded from ordinary queries.
+
+The legacy bootstrap is restricted to an empty database and seeds personal baseline
+data only for the marked original account. New identity creation produces only an
+account; it cannot create a profile, configuration, baseline, history, preferences,
+or other personal defaults.
 
 Login creates a cryptographically random 256-bit opaque token. Only a SHA-256 token
 hash is persisted in `AuthSession`; the raw value exists only in an HttpOnly,
 SameSite=Lax cookie that is Secure in production. Sessions have explicit expiry,
 revocation, last-use tracking, a unique token-hash index, and a TTL cleanup index.
 Protected pages enforce authentication in their Server Components, while protected
-REST handlers independently validate the session before resolving owner-scoped data.
+REST handlers independently validate the session before resolving user-scoped data.
+All personal service queries derive userId from that session. Compatibility helper
+names containing “owner” mean the current resource owner, never a singleton.
+
+V2.2 adds server-only `EmailOtp` and `AuthRateLimit` collections. OTP requests are
+cryptographically generated, bound by HMAC-SHA256 to purpose, request ID, canonical
+email, and code, and sent through a narrow Resend provider abstraction. The database
+stores only the digest. A PENDING_SEND record becomes SENT only after confirmed
+provider success; verification accepts only SENT, unexpired, under-attempt-limit
+records and atomically consumes one. Fixed-window email/IP limits and resend cooldown
+state are database-enforced, so warm instances do not own security state.
+
+Registration creates only a verified ACTIVE account after code consumption, then
+uses the existing session service and current setup gate. It creates no profile,
+timezone, body data, protocol, rules, or history. Login-code requests return the same
+public shape for missing and disabled accounts, and successful code login records
+`emailVerifiedAt` only when it was previously null. Password login remains supported
+and does not manufacture verification history. All new auth mutations require a
+same-origin request and return private/no-store envelopes.
+
+See [authentication.md](authentication.md), [email-otp-auth.md](email-otp-auth.md),
+and [multi-user-foundation.md](multi-user-foundation.md).
+
+## V2.5 cosmetic identity and brand boundary
+
+`UserProfile.avatarKey` is an optional stable key into the local, browser-safe avatar
+catalogue. Missing or unknown legacy values project to `SYSTEM_DEFAULT`; the default
+is not written as a character assignment. The dedicated same-origin PUT route derives
+ownership from the opaque session and updates only this one profile field. It does
+not call progression, quest, workout, achievement, reward, report, or recovery
+services.
+
+Guild projection code applies `shareProfileSummary` before returning an avatar key.
+All friend surfaces receive null when sharing is disabled, and every read retains the
+ACTIVE bilateral connection check. Original 512x512 WebP assets are served through
+`next/image` with explicit dimensions and responsive sizes. See
+[avatar-branding.md](avatar-branding.md).
+
+## V2.6 device-local install experience
+
+The root `PwaRuntime` mounts one `InstallSystemPrompt` and one shared
+`InstallSystemController`. The controller owns `beforeinstallprompt`, `appinstalled`,
+standalone media, touch/mobile eligibility, and the namespaced seven-day local
+dismissal. `/install` consumes the same state rather than registering duplicate
+browser listeners. Server snapshots are always hidden, avoiding hydration flash.
+
+Native install events are one-use capability objects: they are deferred on receipt
+and consumed only by an explicit action. iOS/iPadOS uses a modal manual instruction
+flow and makes no installation-success claim. The feature has no model, API, owner
+field, or database migration. Service-worker and private navigation caching rules are
+unchanged. See [install-system.md](install-system.md).
 
 ## Profile and protocol configuration
 
@@ -293,3 +392,18 @@ replace historical assessments.
 The bootstrapped InBody120 record preserves the supplied 14 August 2026 source data.
 Its reported 71.4 kg target remains `targetWeightKgReported` and is independent of
 the optional Winter Arc goal weight.
+
+## V2.4 bilateral Guild privacy boundary
+
+`GuildInvite` owns pending email requests, `GuildConnection` owns one canonical sorted
+pair, and `GuildSharingPreferences` owns the viewed member's live policy. Guild OTPs
+reuse V2.2 cryptography with the invite ID as `EmailOtp.contextKey`; null context keeps
+REGISTER/LOGIN hashes and behavior compatible. Acceptance converges through consumed
+OTP reconciliation plus a unique pair upsert.
+
+Friend authorization always starts from the requester's opaque session and an ACTIVE
+pair. Dedicated projection functions whitelist friend-safe identity, Calendar, and
+Report fields after reading current preferences. They do not reuse owner API payloads.
+Unknown catalogue rules are treated as private; weight, body composition, private
+habits, recovery, raw ledgers, notes, auth data, and notification data remain outside
+the default projection. See [guild.md](guild.md).

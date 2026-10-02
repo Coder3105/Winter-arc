@@ -1,4 +1,5 @@
 import fs from "node:fs";
+import { createHash, webcrypto } from "node:crypto";
 import vm from "node:vm";
 
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -53,6 +54,9 @@ describe("Phase 12 service worker runtime", () => {
       URL,
       Response,
       Promise,
+      crypto: webcrypto,
+      TextEncoder,
+      Uint8Array,
     });
   });
 
@@ -174,6 +178,59 @@ describe("Phase 12 service worker runtime", () => {
         body: "A System update is available.",
         data: { path: "/notifications" },
       }),
+    );
+  });
+
+  it.each(["a", "b", null])(
+    "only shows push details to the matching authenticated account (%s)",
+    async (id) => {
+      fetchMock.mockResolvedValue(
+        new Response(JSON.stringify({ success: true, data: { owner: { id } } })),
+      );
+      let work: Promise<unknown> | undefined;
+      handlers.push?.({
+        data: {
+          json: () => ({
+            recipientUserHash: createHash("sha256").update("a").digest("hex"),
+            title: "Personal A",
+            body: "Private A",
+            data: { path: "/today" },
+          }),
+        },
+        waitUntil: (promise: Promise<unknown>) => (work = promise),
+      });
+      await work;
+      expect(fetchMock).toHaveBeenCalledWith("/api/v1/auth/me", {
+        credentials: "same-origin",
+        cache: "no-store",
+      });
+      expect(registration.showNotification).toHaveBeenCalledWith(
+        id === "a" ? "Personal A" : "Winter Arc",
+        expect.objectContaining({
+          body: id === "a" ? "Private A" : "A System update is available.",
+        }),
+      );
+      expect(cache.put).not.toHaveBeenCalled();
+    },
+  );
+
+  it("does not display personal push details when session verification is offline", async () => {
+    fetchMock.mockRejectedValue(new Error("offline"));
+    let work: Promise<unknown> | undefined;
+    handlers.push?.({
+      data: {
+        json: () => ({
+          recipientUserHash: createHash("sha256").update("a").digest("hex"),
+          title: "Private A",
+          body: "Private A",
+        }),
+      },
+      waitUntil: (promise: Promise<unknown>) => (work = promise),
+    });
+    await work;
+    expect(registration.showNotification).toHaveBeenCalledWith(
+      "Winter Arc",
+      expect.objectContaining({ body: "A System update is available." }),
     );
   });
 

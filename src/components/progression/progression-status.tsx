@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 
+import { LevelJourney } from "@/components/progression/level-journey";
 import { SystemEvent, type SystemEventData } from "@/components/system/system-event";
 import { SystemPanel } from "@/components/system/system-panel";
 import { redirectExpiredSession } from "@/lib/auth/client-session";
@@ -160,6 +161,10 @@ export function ProgressionStatus({
     <div className="progression-dashboard">
       <SystemEvent event={systemEvent} onDismiss={dismissSystemEvent} />
       {content}
+      <LevelJourney
+        currentLevel={summary.level.current}
+        progressPercent={summary.level.progressPercent}
+      />
       <div className="progression-next-grid">
         <SystemPanel eyebrow="NEXT // LEVEL" title={`LEVEL ${summary.level.nextLevel}`}>
           <strong className="progression-next-value">

@@ -1,72 +1,43 @@
 "use client";
 
-import { useEffect, useState, useSyncExternalStore } from "react";
+import { useState } from "react";
 
-import { isIos, isStandalone } from "@/lib/pwa/push-client";
-
-interface BeforeInstallPromptEvent extends Event {
-  prompt(): Promise<void>;
-  userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
-}
-
-const subscribeToStaticCapability = () => () => undefined;
+import { useInstallSystem } from "./use-install-system";
 
 export function InstallGuide() {
-  const [prompt, setPrompt] = useState<BeforeInstallPromptEvent | null>(null);
-  const standalone = useSyncExternalStore(
-    subscribeToStaticCapability,
-    isStandalone,
-    () => false,
-  );
-  const ios = useSyncExternalStore(subscribeToStaticCapability, isIos, () => false);
-  const [installedByEvent, setInstalledByEvent] = useState(false);
+  const installSystem = useInstallSystem();
   const [message, setMessage] = useState<string | null>(null);
 
-  useEffect(() => {
-    const capture = (event: Event) => {
-      event.preventDefault();
-      setPrompt(event as BeforeInstallPromptEvent);
-    };
-    const complete = () => {
-      setInstalledByEvent(true);
-      setPrompt(null);
-    };
-    window.addEventListener("beforeinstallprompt", capture);
-    window.addEventListener("appinstalled", complete);
-    return () => {
-      window.removeEventListener("beforeinstallprompt", capture);
-      window.removeEventListener("appinstalled", complete);
-    };
-  }, []);
-
-  const installed = standalone || installedByEvent;
-
   async function install() {
-    if (!prompt) return;
-    await prompt.prompt();
-    const choice = await prompt.userChoice;
+    const choice = await installSystem.promptInstall();
     setMessage(
-      choice.outcome === "accepted" ? "INSTALL ACCEPTED." : "INSTALL DISMISSED.",
+      choice === "accepted"
+        ? "INSTALL ACCEPTED."
+        : choice === "dismissed"
+          ? "INSTALL DISMISSED."
+          : "USE THE BROWSER INSTALL MENU WHEN AVAILABLE.",
     );
-    setPrompt(null);
   }
 
   return (
     <div className="install-guide">
       <div className="install-state">
         <span>INSTALL STATE</span>
-        <strong>{installed ? "INSTALLED" : "BROWSER MODE"}</strong>
+        <strong>
+          {installSystem.isStandalone || installSystem.installedByEvent
+            ? "INSTALLED"
+            : "BROWSER MODE"}
+        </strong>
       </div>
-      {installed ? (
+      {installSystem.isStandalone || installSystem.installedByEvent ? (
         <p>Winter Arc is running in standalone app mode.</p>
-      ) : ios ? (
+      ) : installSystem.isIos ? (
         <ol>
-          <li>Open this secure site in Safari.</li>
-          <li>Tap the Share button.</li>
+          <li>Open the browser Share or menu controls.</li>
           <li>Select Add to Home Screen, then Add.</li>
           <li>Open Winter Arc from its Home Screen icon before enabling push.</li>
         </ol>
-      ) : prompt ? (
+      ) : installSystem.canNativePrompt ? (
         <button className="primary-button" type="button" onClick={() => void install()}>
           INSTALL WINTER ARC
         </button>

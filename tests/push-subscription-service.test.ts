@@ -102,6 +102,28 @@ describe("push subscription service", () => {
     });
   });
 
+  it("never transfers A's endpoint to B on a globally unique collision", async () => {
+    mocks.upsert.mockRejectedValueOnce({ code: 11000 }).mockResolvedValueOnce(null);
+    await expect(registerPushSubscription("user-b", input)).rejects.toMatchObject({
+      code: "CONFLICT",
+    });
+    for (const call of mocks.upsert.mock.calls)
+      expect(call[0]).toMatchObject({ userId: "user-b" });
+  });
+
+  it("B cannot unsubscribe A's endpoint", async () => {
+    mocks.updateOne.mockImplementation((filter) =>
+      Promise.resolve({ modifiedCount: filter.userId === "user-a" ? 1 : 0 }),
+    );
+    await expect(unsubscribePushSubscription("user-b", input.endpoint)).resolves.toEqual({
+      unsubscribed: false,
+    });
+    expect(mocks.updateOne).toHaveBeenCalledWith(
+      expect.objectContaining({ userId: "user-b" }),
+      expect.anything(),
+    );
+  });
+
   it("invalidates only the authenticated owner's hashed endpoint", async () => {
     await expect(unsubscribePushSubscription("owner-1", input.endpoint)).resolves.toEqual(
       {

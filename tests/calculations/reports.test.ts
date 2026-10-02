@@ -153,6 +153,29 @@ describe("Phase 10 weekly report calculations", () => {
     expect(ranked.attentionRules.map(({ key }) => key)).toEqual(["sleep", "steps"]);
   });
 
+  it("includes V2.3 rules generically without a legacy-rule allowlist", () => {
+    const rules = calculateWeeklyRuleMetrics([
+      {
+        ...day("2026-10-01", 100),
+        rules: ["reading", "meditation", "journaling", "stretching"].map(
+          (key, order) => ({
+            key,
+            name: key.toUpperCase(),
+            order,
+            state: "PASS" as const,
+          }),
+        ),
+      },
+    ]);
+    expect(rules.map((rule) => rule.key)).toEqual([
+      "reading",
+      "meditation",
+      "journaling",
+      "stretching",
+    ]);
+    expect(rules.every((rule) => rule.compliancePercent === 100)).toBe(true);
+  });
+
   it("returns null Week 1 comparisons and signed later-week deltas", () => {
     const current = {
       arcScore: 80,

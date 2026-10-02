@@ -130,6 +130,39 @@ describe("Daily Quest creation service", () => {
     mocks.weightExists.mockResolvedValue(null);
   });
 
+  it("same-date responses modify only their authenticated user's quest", async () => {
+    const records = new Map<string, ReturnType<typeof documentFromInsert>>();
+    mocks.getConfig.mockImplementation((userId: string) =>
+      Promise.resolve({ ...config(), id: "config-" + userId }),
+    );
+    mocks.findOneAndUpdate.mockImplementation((filter, update) => {
+      const userId = filter.userId as string;
+      if (update.$setOnInsert) {
+        if (!records.has(userId))
+          records.set(userId, {
+            ...documentFromInsert(update),
+            _id: { toString: () => "quest-" + userId },
+          });
+        return Promise.resolve(records.get(userId));
+      }
+      const record = records.get(userId);
+      if (!record || filter._id !== record._id.toString()) return Promise.resolve(null);
+      for (const [key, value] of Object.entries(update.$set ?? {})) {
+        if (key.startsWith("responses.")) record.responses.set(key.slice(10), value);
+      }
+      return Promise.resolve(record);
+    });
+    const now = new Date("2026-10-01T06:00:00Z");
+    await getOrCreateTodayDailyQuest("user-a", now);
+    await getOrCreateTodayDailyQuest("user-b", now);
+    await updateTodayDailyQuestResponse("user-a", { key: "sleep", value: 8 }, now);
+    expect(records.get("user-a")?.responses.get("sleep")).toMatchObject({
+      numericValue: 8,
+    });
+    expect(records.get("user-b")?.responses.has("sleep")).toBe(false);
+    expect(records).toHaveLength(2);
+  });
+
   it("creates one local-date record with challenge day/week and enabled snapshots", async () => {
     const result = await getOrCreateTodayDailyQuest(
       "owner-1",
@@ -378,6 +411,37 @@ describe("Daily Quest response updates", () => {
       ),
     ).rejects.toMatchObject({ code });
   });
+
+  it.each(["reading", "meditation", "stretching"])(
+    "rejects fractional whole-minute values for %s",
+    async (key) => {
+      const base = config();
+      mocks.getConfig.mockResolvedValue({
+        ...base,
+        rules: [
+          ...base.rules,
+          {
+            key,
+            name: key.toUpperCase(),
+            category: "GROWTH",
+            enabled: true,
+            type: "NUMERIC_MINIMUM",
+            target: 10,
+            unit: "minutes",
+            requiredFrequency: 7,
+            order: 10,
+          },
+        ],
+      });
+      await expect(
+        updateTodayDailyQuestResponse(
+          "owner-1",
+          { key, value: 1.5 },
+          new Date("2026-09-30T06:00:00Z"),
+        ),
+      ).rejects.toMatchObject({ code: "INVALID_RULE_VALUE" });
+    },
+  );
 });
 
 describe("historical date read", () => {

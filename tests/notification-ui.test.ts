@@ -80,6 +80,9 @@ describe("Phase 11 notification UI", () => {
       }),
     );
     expect(markup).toContain("ENABLE APPLICATION REMINDERS");
+    expect(markup).toContain("EMAIL REMINDERS");
+    expect(markup).toContain("DAILY QUEST REMINDER AT 6 PM");
+    expect(markup).toContain("separate from application and Web Push reminders");
     expect(markup).toContain("DAILY QUEST");
     expect(markup).toContain("MORNING WEIGHT");
     expect(markup).toContain("HYDRATION");

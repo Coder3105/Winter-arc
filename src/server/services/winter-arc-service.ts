@@ -21,7 +21,7 @@ export interface WinterArcConfigDto {
   readonly startDate: string;
   readonly endDate: string;
   readonly status: WinterArcConfigDocument["status"];
-  readonly startingWeightKg: number;
+  readonly startingWeightKg: number | null;
   readonly targetWeightKg: number | null;
   readonly weeklyWorkoutTarget: number;
   readonly rules: DailyRuleConfiguration[];

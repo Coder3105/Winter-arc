@@ -35,7 +35,54 @@ export const serverEnvironmentSchema = z.object({
     (value) => (value === "" ? undefined : value),
     z.string().trim().min(1).optional(),
   ),
+  EMAIL_PROVIDER: z.preprocess(
+    (value) => (value === "" ? undefined : value),
+    z
+      .enum(["gmail", "resend"], {
+        error: "EMAIL_PROVIDER must be either gmail or resend.",
+      })
+      .optional(),
+  ),
+  GMAIL_USER: z.preprocess(
+    (value) => (value === "" ? undefined : value),
+    z.string().trim().email("GMAIL_USER must be a valid email address.").optional(),
+  ),
+  GMAIL_APP_PASSWORD: z.preprocess(
+    (value) => (value === "" ? undefined : value),
+    z.string().trim().min(1).optional(),
+  ),
+  RESEND_API_KEY: z.preprocess(
+    (value) => (value === "" ? undefined : value),
+    z.string().trim().min(1).optional(),
+  ),
+  EMAIL_FROM: z.preprocess(
+    (value) => (value === "" ? undefined : value),
+    z.string().trim().min(3).max(320).optional(),
+  ),
+  OTP_PEPPER: z.preprocess(
+    (value) => (value === "" ? undefined : value),
+    z.string().min(32, "OTP_PEPPER must contain at least 32 characters.").optional(),
+  ),
+  APP_BASE_URL: z.preprocess(
+    (value) => (value === "" ? undefined : value),
+    z
+      .string()
+      .url("APP_BASE_URL must be an absolute URL.")
+      .refine((value) => {
+        try {
+          return ["http:", "https:"].includes(new URL(value).protocol);
+        } catch {
+          return false;
+        }
+      }, "APP_BASE_URL must use HTTP or HTTPS.")
+      .transform((value) => new URL(value).origin)
+      .optional(),
+  ),
 });
+
+export function parseApplicationOrigin(value: string | undefined): string | undefined {
+  return serverEnvironmentSchema.shape.APP_BASE_URL.parse(value);
+}
 
 export type ServerEnvironment = z.infer<typeof serverEnvironmentSchema>;
 

@@ -1,3 +1,5 @@
+import { createHash } from "node:crypto";
+
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { PushSubscription } from "web-push";
 
@@ -84,7 +86,7 @@ describe("Web Push transport", () => {
     });
   });
 
-  it("fans out safe external content and never serializes private text or identities", async () => {
+  it("fans out safe external content with a one-way recipient binding", async () => {
     mocks.select.mockResolvedValue([subscription("one"), subscription("two")]);
     const result = await new WebPushNotificationTransport(provider).send(
       "owner-1",
@@ -103,6 +105,10 @@ describe("Web Push transport", () => {
     expect(payload).not.toContain("No Fap");
     expect(payload).not.toContain("no_fap");
     expect(payload).not.toContain(candidate.privateBody);
+    expect(payload).not.toContain("owner-1");
+    expect(JSON.parse(payload)).toMatchObject({
+      recipientUserHash: createHash("sha256").update("owner-1").digest("hex"),
+    });
     expect(payload).toContain('"path":"/achievements"');
   });
 

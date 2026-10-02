@@ -28,9 +28,10 @@ async function main() {
 }
 
 main()
-  .catch((error: unknown) => {
-    const message = error instanceof Error ? error.message : "Owner bootstrap failed.";
-    console.error(message);
+  .catch(() => {
+    console.error(
+      "Original-owner bootstrap failed. Check configuration, migration status and database access. No raw database error was logged.",
+    );
     process.exitCode = 1;
   })
   .finally(async () => {

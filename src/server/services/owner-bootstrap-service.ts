@@ -8,6 +8,7 @@ import { hashPassword } from "@/server/auth/password";
 import { BodyCompositionAssessmentModel } from "@/server/models/body-composition-assessment";
 import { OwnerModel } from "@/server/models/owner";
 import { INBODY_BASELINE } from "@/server/seed/inbody-baseline";
+import { normalizeEmail } from "@/lib/auth/email";
 
 type BootstrapInput = z.infer<typeof ownerBootstrapSchema>;
 
@@ -19,7 +20,7 @@ export interface BootstrapResult {
 
 export async function bootstrapOwner(input: BootstrapInput): Promise<BootstrapResult> {
   await connectToDatabase();
-  const normalizedEmail = input.OWNER_EMAIL.toLowerCase();
+  const normalizedEmail = normalizeEmail(input.OWNER_EMAIL);
   let owner = await OwnerModel.findOne({ email: normalizedEmail });
   let ownerCreated = false;
 
@@ -29,14 +30,27 @@ export async function bootstrapOwner(input: BootstrapInput): Promise<BootstrapRe
       throw new Error("An owner already exists; refusing to create a second owner.");
     }
 
+    // Empty-database legacy bootstrap only; never build indexes over unknown accounts.
+    await OwnerModel.createIndexes();
+
     owner = await OwnerModel.create({
       email: normalizedEmail,
+      emailNormalized: normalizedEmail,
+      status: "ACTIVE",
+      emailVerifiedAt: null,
+      isOriginalOwner: true,
       passwordHash: await hashPassword(input.OWNER_PASSWORD),
       displayName: input.OWNER_DISPLAY_NAME,
       isActive: true,
       lastLoginAt: null,
     });
     ownerCreated = true;
+  }
+
+  if (!owner.isOriginalOwner) {
+    throw new Error(
+      "Refusing to seed personal baseline data for a non-original account. Run the V2.1 migration first.",
+    );
   }
 
   const assessmentDate = new Date(INBODY_BASELINE.assessmentDate);

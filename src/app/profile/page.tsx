@@ -5,16 +5,21 @@ import { CalculatedMetrics } from "@/components/profile/calculated-metrics";
 import { ProgressionIdentity } from "@/components/progression/progression-status";
 import { SystemPanel } from "@/components/system/system-panel";
 import { ShadowGuard } from "@/components/system/shadow-portrait";
+import { Avatar } from "@/components/profile/avatar";
+import { ProfileGuildPreview } from "@/components/guild/profile-guild-preview";
 import { requirePageOwner } from "@/server/auth/request-auth";
 import { getCalculationContext } from "@/server/services/calculation-summary-service";
 import { getProgressionSummary } from "@/server/services/progression-service";
+import { getGuildMemberListProjection } from "@/server/services/guild-projection-service";
 
 export default async function ProfilePage() {
   const owner = await requirePageOwner();
-  const [{ profile, config, baseline, summary }, progression] = await Promise.all([
-    getCalculationContext(owner.id),
-    getProgressionSummary(owner.id),
-  ]);
+  const [{ profile, config, baseline, summary }, progression, guildMembers] =
+    await Promise.all([
+      getCalculationContext(owner.id),
+      getProgressionSummary(owner.id),
+      getGuildMemberListProjection(owner.id),
+    ]);
 
   return (
     <main className="app-shell">
@@ -33,6 +38,19 @@ export default async function ProfilePage() {
             <ShadowGuard name={owner.displayName} />
           </div>
           <SystemPanel eyebrow="AUTH // OWNER" title="OWNER">
+            <div className="system-identity">
+              <Avatar avatarKey={profile?.avatarKey ?? null} size={96} eager />
+              <div>
+                <p>SYSTEM IDENTITY</p>
+                <strong>{owner.displayName}</strong>
+                <Link
+                  className="system-status-action identity-change-link"
+                  href="/profile/avatar"
+                >
+                  CHANGE AVATAR
+                </Link>
+              </div>
+            </div>
             <dl className="detail-list">
               <div>
                 <dt>DISPLAY NAME</dt>
@@ -53,15 +71,19 @@ export default async function ProfilePage() {
               <dl className="detail-list">
                 <div>
                   <dt>HEIGHT</dt>
-                  <dd>{profile.heightCm} cm</dd>
+                  <dd>
+                    {profile.heightCm === null
+                      ? "NOT AVAILABLE"
+                      : `${profile.heightCm} cm`}
+                  </dd>
                 </div>
                 <div>
                   <dt>AGE AT BASELINE</dt>
-                  <dd>{profile.ageAtBaseline}</dd>
+                  <dd>{profile.ageAtBaseline ?? "NOT AVAILABLE"}</dd>
                 </div>
                 <div>
                   <dt>SEX</dt>
-                  <dd>{profile.sex}</dd>
+                  <dd>{profile.sex ?? "NOT AVAILABLE"}</dd>
                 </div>
                 <div>
                   <dt>TIMEZONE</dt>
@@ -148,6 +170,16 @@ export default async function ProfilePage() {
             </p>
             <Link className="system-status-action" href="/profile/notifications">
               OPEN NOTIFICATION SETTINGS →
+            </Link>
+          </SystemPanel>
+          <SystemPanel
+            className="profile-grid__wide"
+            eyebrow="SYSTEM NETWORK // PRIVATE"
+            title="GUILD"
+          >
+            <ProfileGuildPreview members={guildMembers} />
+            <Link className="system-status-action" href="/guild">
+              OPEN GUILD →
             </Link>
           </SystemPanel>
           <SystemPanel

@@ -13,6 +13,8 @@ export default defineConfig({
   test: {
     environment: "node",
     include: ["tests/**/*.test.{ts,tsx}"],
+    // bcrypt cost-12 checks can exceed Vitest's 5s default when 90+ files run in parallel.
+    testTimeout: 15_000,
     coverage: {
       reporter: ["text", "json", "html"],
     },

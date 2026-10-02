@@ -7,7 +7,14 @@ interface AuthenticatedHeaderProps {
   readonly displayName: string;
   readonly section: string;
   readonly active?:
-    "TODAY" | "CALENDAR" | "WORKOUTS" | "PROGRESS" | "PROFILE" | "REPORTS";
+    | "TODAY"
+    | "CALENDAR"
+    | "WORKOUTS"
+    | "PROGRESS"
+    | "PROFILE"
+    | "REPORTS"
+    | "GUILD"
+    | "CONFIGURATION";
 }
 
 export function AuthenticatedHeader({

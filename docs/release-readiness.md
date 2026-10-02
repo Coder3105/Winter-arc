@@ -121,4 +121,6 @@ cron secret must remain server-only.
 Multi-user self-registration, personal real-world reward configuration, full offline
 private tracking, exercise sets/reps programming, a food/calorie database, AI
 coaching, and email/SMS/WhatsApp notifications are intentionally not implemented.
-The current release remains single-owner. There is no Phase 14.
+V1 ended at Phase 13. V2.1 subsequently adds the multi-user identity and isolation
+foundation, while public registration remains deferred. See
+[multi-user-foundation.md](multi-user-foundation.md).

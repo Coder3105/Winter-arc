@@ -1,0 +1,202 @@
+:root {
+  --mobile-navigation-height: 0px;
+}
+
+.install-system-prompt {
+  position: fixed;
+  z-index: 18;
+  right: max(0.75rem, env(safe-area-inset-right));
+  bottom: calc(var(--mobile-navigation-height) + env(safe-area-inset-bottom) + 0.75rem);
+  left: max(0.75rem, env(safe-area-inset-left));
+  display: grid;
+  width: min(calc(100vw - 1.5rem), 430px);
+  max-height: min(48dvh, 260px);
+  margin-inline: auto;
+  padding: 1rem 2.8rem 1rem 1rem;
+  overflow-y: auto;
+  border: 1px solid var(--border-system);
+  border-radius: var(--radius-md);
+  background: rgb(2 10 16 / 97%);
+  box-shadow: var(--shadow-system), var(--glow-system);
+  gap: 0.3rem;
+  animation: install-system-enter 200ms ease-out both;
+}
+
+.install-system-prompt > p,
+.install-system-prompt > strong,
+.install-system-prompt > span,
+.install-system-prompt > small {
+  margin: 0;
+}
+
+.install-system-prompt > p {
+  color: var(--system-blue-muted);
+  font-size: 0.55rem;
+  letter-spacing: 0.14em;
+}
+
+.install-system-prompt > strong {
+  color: var(--system-blue-bright);
+  font-family: var(--font-display);
+  font-size: 1rem;
+  letter-spacing: 0.07em;
+}
+
+.install-system-prompt > span,
+.install-system-prompt > small {
+  color: var(--text-secondary);
+  font-size: 0.65rem;
+  line-height: 1.5;
+}
+
+.install-system-prompt > div {
+  display: grid;
+  margin-top: 0.45rem;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.install-system-prompt > div button {
+  min-height: 44px;
+  padding-inline: 0.7rem;
+  white-space: nowrap;
+}
+
+.install-system-prompt > div a {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  color: var(--system-blue-light);
+  font-size: 0.55rem;
+  letter-spacing: 0.08em;
+}
+
+.install-system-prompt__close,
+.install-instructions__close {
+  position: absolute;
+  top: 0.25rem;
+  right: 0.25rem;
+  width: 44px;
+  height: 44px;
+  border: 0;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-size: 1.25rem;
+}
+
+.install-instructions {
+  position: fixed;
+  inset: 0;
+  width: min(440px, calc(100vw - 1.5rem));
+  max-height: calc(100dvh - 1.5rem - env(safe-area-inset-bottom));
+  margin: auto auto max(0.75rem, env(safe-area-inset-bottom));
+  padding: 1.5rem;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  border: 1px solid var(--border-system);
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  background: radial-gradient(ellipse at top, #102c3e, #050d16 65%);
+  color: var(--text-primary);
+  box-shadow: 0 -20px 60px rgb(0 0 0 / 65%);
+}
+
+.install-instructions::backdrop {
+  background: rgb(1 6 12 / 78%);
+  backdrop-filter: blur(7px);
+}
+
+.install-instructions[open] {
+  animation: install-system-enter 180ms ease-out both;
+}
+
+.install-instructions__eyebrow {
+  margin: 0;
+  color: var(--system-blue-muted);
+  font-size: 0.56rem;
+  letter-spacing: 0.14em;
+}
+
+.install-instructions h2 {
+  margin: 0.7rem 0;
+  color: var(--system-blue-bright);
+  font-family: var(--font-display);
+  font-size: 1.45rem;
+  letter-spacing: 0.07em;
+  outline: none;
+}
+
+.install-instructions > p:not(.install-instructions__eyebrow),
+.install-instructions ol {
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+  line-height: 1.7;
+}
+
+.install-instructions ol {
+  margin: 1rem 0;
+  padding-left: 1.25rem;
+}
+
+.install-instructions__actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+.install-instructions__actions > * {
+  min-height: 44px;
+  text-decoration: none;
+}
+
+@keyframes install-system-enter {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (min-width: 64.01rem) {
+  .install-system-prompt {
+    display: none;
+  }
+}
+
+@media (max-width: 25rem) {
+  .install-system-prompt > div {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .install-system-prompt > div a {
+    grid-column: 1 / -1;
+    justify-content: center;
+  }
+}
+
+@media (max-height: 34rem) and (orientation: landscape) {
+  .install-system-prompt {
+    max-height: calc(100dvh - env(safe-area-inset-bottom) - 1.5rem);
+    padding-block: 0.7rem;
+  }
+
+  .install-system-prompt > span {
+    display: none;
+  }
+
+  .install-instructions {
+    max-height: calc(100dvh - 1rem);
+    margin-bottom: 0.5rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .install-system-prompt,
+  .install-instructions {
+    animation: none !important;
+  }
+}

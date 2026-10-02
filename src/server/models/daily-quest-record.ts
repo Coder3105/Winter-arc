@@ -45,7 +45,7 @@ const ruleSnapshotSchema = new Schema<DailyQuestRuleSnapshotDocument>(
     target: { type: Number, default: null, min: 0 },
     unit: { type: String, default: null, maxlength: 30 },
     requiredFrequency: { type: Number, required: true, min: 1, max: 7 },
-    order: { type: Number, required: true, min: 0, max: 100 },
+    order: { type: Number, required: true, min: 0 },
   },
   { _id: false },
 );
@@ -92,6 +92,10 @@ dailyQuestRecordSchema.index(
   { unique: true, name: "unique_daily_quest_per_protocol" },
 );
 dailyQuestRecordSchema.index({ userId: 1, date: -1 });
+
+if (process.env.NODE_ENV === "development" && mongoose.models.DailyQuestRecord) {
+  mongoose.deleteModel("DailyQuestRecord");
+}
 
 export const DailyQuestRecordModel: Model<DailyQuestRecordDocument> =
   (mongoose.models.DailyQuestRecord as Model<DailyQuestRecordDocument> | undefined) ??
